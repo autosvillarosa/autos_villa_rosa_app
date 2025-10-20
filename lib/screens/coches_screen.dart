@@ -10,6 +10,7 @@ import '../button/ubicacion_edit_button.dart';
 import '../button/checklist_edit_button.dart';
 import 'chat_screen.dart';
 import 'filtros_adicionales_screen.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class CochesScreen extends StatefulWidget {
   const CochesScreen({super.key});
@@ -375,6 +376,532 @@ class CochesScreenState extends State<CochesScreen> {
     });
   }
 
+  int _calculateCrossAxisCount(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    const desiredCardWidth = 250.0;
+    int crossAxisCount = (screenWidth / desiredCardWidth).floor();
+    return crossAxisCount.clamp(3, 6);
+  }
+
+  Widget _buildCarCard(BuildContext context, int index) {
+    final coche = _filteredCoches[index];
+
+    Color estadoColor;
+    switch (coche['estado_coche']?.toLowerCase()) {
+      case 'por llegar':
+        estadoColor = Color(0xFF0053A0);
+        break;
+      case 'disponible':
+        estadoColor = Colors.green.shade600;
+        break;
+      case 'reservado':
+        estadoColor = Colors.orange.shade600;
+        break;
+      case 'vendido':
+        estadoColor = Colors.red.shade600;
+        break;
+      default:
+        estadoColor = Colors.black;
+    }
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatScreen(
+              cocheUuid: coche['uuid'],
+              marca: coche['marca'] ?? 'N/A',
+              matricula: coche['matricula'] ?? 'N/A',
+              modelo: coche['modelo'] ?? 'N/A',
+            ),
+          ),
+        ).then((_) => _refreshWithoutScrollLoss());
+      },
+      child: Card(
+        margin: EdgeInsets.fromLTRB(
+          4.0,
+          index == 0 ? 0.0 : 2.0,
+          4.0,
+          2.0,
+        ),
+        elevation: 4.0,
+        color: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8.0)),
+          side: BorderSide(color: Colors.grey, width: 1.0),
+        ),
+        child: kIsWeb
+            ? Container(
+                padding: const EdgeInsets.all(4.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: Stack(
+                          children: [
+                            Center(
+                              child: coche['imagen_url'] != null
+                                  ? CachedNetworkImage(
+                                      imageUrl: coche['imagen_url'],
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => const Icon(
+                                        Icons.car_rental,
+                                        size: 50,
+                                        color: Colors.grey,
+                                      ),
+                                      errorWidget: (context, url, error) =>
+                                          const Icon(
+                                        Icons.broken_image,
+                                        size: 50,
+                                        color: Colors.grey,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.car_rental,
+                                      size: 50,
+                                      color: Colors.grey,
+                                    ),
+                            ),
+                            Positioned(
+                              top: 4.0,
+                              left: 4.0,
+                              right: 4.0,
+                              child: Text(
+                                coche['matricula'] ?? 'N/A',
+                                style: const TextStyle(
+                                  fontSize: 14.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 4.0,
+                              left: 4.0,
+                              right: 4.0,
+                              child: Text(
+                                coche['estado_coche'] ?? 'N/A',
+                                style: TextStyle(
+                                  fontSize: 12.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: estadoColor,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildInfoRowBold(coche['marca'] ?? 'N/A'),
+                          _buildInfoRow(coche['modelo'] ?? 'N/A'),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Expanded(
+                                flex: 4,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.calendar_today,
+                                        size: 14.0, color: Colors.grey),
+                                    const SizedBox(width: 4.0),
+                                    Expanded(
+                                      child: _buildInfoRow(
+                                          coche['formattedFechaMatriculacion']),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                flex: 6,
+                                child: _buildInfoRowRich(
+                                  textSpans: [
+                                    TextSpan(
+                                      text: 'ITV ',
+                                      style: TextStyle(
+                                        fontSize: 14.0,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: coche['itvValue'],
+                                      style: const TextStyle(
+                                        fontSize: 14.0,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 4,
+                                child: _buildInfoRowRich(
+                                  textSpans: [
+                                    TextSpan(
+                                      text: '€ ',
+                                      style: TextStyle(
+                                        fontSize: 14.0,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text:
+                                          coche['precio']?.toString() ?? 'N/A',
+                                      style: const TextStyle(
+                                        fontSize: 14.0,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                flex: 6,
+                                child: _buildInfoRowRich(
+                                  textSpans: [
+                                    TextSpan(
+                                      text: 'KM ',
+                                      style: TextStyle(
+                                        fontSize: 14.0,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: coche['kmValue'],
+                                      style: const TextStyle(
+                                        fontSize: 14.0,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.location_on,
+                                  size: 14.0, color: Colors.grey),
+                              const SizedBox(width: 4.0),
+                              Expanded(
+                                child: _buildInfoRow(coche['ubicacionDisplay']),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildRoundButton(
+                            context,
+                            Icons.picture_as_pdf,
+                            () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PdfEditButton(
+                                  cocheUuid: coche['uuid'],
+                                  cocheData: coche,
+                                ),
+                              ),
+                            ).then((_) => _refreshWithoutScrollLoss()),
+                          ),
+                          const SizedBox(width: 4.0),
+                          _buildRoundButton(
+                            context,
+                            Icons.location_on,
+                            () => showDialog(
+                              context: context,
+                              builder: (context) => UbicacionEditButton(
+                                cocheUuid: coche['uuid'],
+                                currentUbicacion: coche['ubicacion'],
+                              ),
+                            ).then((_) => _refreshWithoutScrollLoss()),
+                          ),
+                          const SizedBox(width: 4.0),
+                          _buildRoundButton(
+                            context,
+                            Icons.checklist,
+                            () => showDialog(
+                              context: context,
+                              builder: (context) => ChecklistEditButton(
+                                cocheUuid: coche['uuid'],
+                                currentDiagnostico: coche['diagnostico'],
+                                currentFechaItv: coche['fecha_itv'],
+                              ),
+                            ).then((_) => _refreshWithoutScrollLoss()),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : Container(
+                height: 154.0,
+                padding: const EdgeInsets.all(4.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(right: 8.0),
+                      child: Container(
+                        width: 130.0,
+                        height: 146.0,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: Stack(
+                          children: [
+                            Center(
+                              child: AspectRatio(
+                                aspectRatio: 1 / 1,
+                                child: coche['imagen_url'] != null
+                                    ? CachedNetworkImage(
+                                        imageUrl: coche['imagen_url'],
+                                        fit: BoxFit.contain,
+                                        placeholder: (context, url) =>
+                                            const Icon(
+                                          Icons.car_rental,
+                                          size: 50,
+                                          color: Colors.grey,
+                                        ),
+                                        errorWidget: (context, url, error) =>
+                                            const Icon(
+                                          Icons.broken_image,
+                                          size: 50,
+                                          color: Colors.grey,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.car_rental,
+                                        size: 50,
+                                        color: Colors.grey,
+                                      ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 4.0,
+                              left: 4.0,
+                              right: 4.0,
+                              child: Text(
+                                coche['matricula'] ?? 'N/A',
+                                style: const TextStyle(
+                                  fontSize: 14.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 4.0,
+                              left: 4.0,
+                              right: 4.0,
+                              child: Text(
+                                coche['estado_coche'] ?? 'N/A',
+                                style: TextStyle(
+                                  fontSize: 12.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: estadoColor,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildInfoRowBold(coche['marca'] ?? 'N/A'),
+                          _buildInfoRow(coche['modelo'] ?? 'N/A'),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Expanded(
+                                flex: 4,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.calendar_today,
+                                        size: 14.0, color: Colors.grey),
+                                    const SizedBox(width: 4.0),
+                                    Expanded(
+                                      child: _buildInfoRow(
+                                          coche['formattedFechaMatriculacion']),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                flex: 6,
+                                child: _buildInfoRowRich(
+                                  textSpans: [
+                                    TextSpan(
+                                      text: 'ITV ',
+                                      style: TextStyle(
+                                        fontSize: 14.0,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: coche['itvValue'],
+                                      style: const TextStyle(
+                                        fontSize: 14.0,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 4,
+                                child: _buildInfoRowRich(
+                                  textSpans: [
+                                    TextSpan(
+                                      text: '€ ',
+                                      style: TextStyle(
+                                        fontSize: 14.0,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text:
+                                          coche['precio']?.toString() ?? 'N/A',
+                                      style: const TextStyle(
+                                        fontSize: 14.0,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                flex: 6,
+                                child: _buildInfoRowRich(
+                                  textSpans: [
+                                    TextSpan(
+                                      text: 'KM ',
+                                      style: TextStyle(
+                                        fontSize: 14.0,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: coche['kmValue'],
+                                      style: const TextStyle(
+                                        fontSize: 14.0,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.location_on,
+                                  size: 14.0, color: Colors.grey),
+                              const SizedBox(width: 4.0),
+                              Expanded(
+                                child: _buildInfoRow(coche['ubicacionDisplay']),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildRoundButton(
+                          context,
+                          Icons.picture_as_pdf,
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PdfEditButton(
+                                cocheUuid: coche['uuid'],
+                                cocheData: coche,
+                              ),
+                            ),
+                          ).then((_) => _refreshWithoutScrollLoss()),
+                        ),
+                        const SizedBox(height: 1.0),
+                        _buildRoundButton(
+                          context,
+                          Icons.location_on,
+                          () => showDialog(
+                            context: context,
+                            builder: (context) => UbicacionEditButton(
+                              cocheUuid: coche['uuid'],
+                              currentUbicacion: coche['ubicacion'],
+                            ),
+                          ).then((_) => _refreshWithoutScrollLoss()),
+                        ),
+                        const SizedBox(height: 1.0),
+                        _buildRoundButton(
+                          context,
+                          Icons.checklist,
+                          () => showDialog(
+                            context: context,
+                            builder: (context) => ChecklistEditButton(
+                              cocheUuid: coche['uuid'],
+                              currentDiagnostico: coche['diagnostico'],
+                              currentFechaItv: coche['fecha_itv'],
+                            ),
+                          ).then((_) => _refreshWithoutScrollLoss()),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -510,350 +1037,30 @@ class CochesScreenState extends State<CochesScreen> {
                     ? const Center(child: CircularProgressIndicator())
                     : _filteredCoches.isEmpty
                         ? const Center(child: Text('No hay coches disponibles'))
-                        : ListView.builder(
-                            controller: _scrollController,
-                            cacheExtent: 1000.0,
-                            itemCount: _filteredCoches.length,
-                            itemBuilder: (context, index) {
-                              final coche = _filteredCoches[index];
-
-                              Color estadoColor;
-                              switch (coche['estado_coche']?.toLowerCase()) {
-                                case 'por llegar':
-                                  estadoColor = Color(0xFF0053A0);
-                                  break;
-                                case 'disponible':
-                                  estadoColor = Colors.green.shade600;
-                                  break;
-                                case 'reservado':
-                                  estadoColor = Colors.orange.shade600;
-                                  break;
-                                case 'vendido':
-                                  estadoColor = Colors.red.shade600;
-                                  break;
-                                default:
-                                  estadoColor = Colors.black;
-                              }
-
-                              return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ChatScreen(
-                                        cocheUuid: coche['uuid'],
-                                        marca: coche['marca'] ?? 'N/A',
-                                        matricula: coche['matricula'] ?? 'N/A',
-                                        modelo: coche['modelo'] ?? 'N/A',
-                                      ),
-                                    ),
-                                  ).then((_) => _refreshWithoutScrollLoss());
-                                },
-                                child: Card(
-                                  margin: EdgeInsets.fromLTRB(
-                                    4.0,
-                                    index == 0 ? 0.0 : 2.0,
-                                    4.0,
-                                    2.0,
-                                  ),
-                                  elevation: 4.0,
-                                  color: Colors.white,
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(8.0)),
-                                    side: BorderSide(
-                                        color: Colors.grey, width: 1.0),
-                                  ),
-                                  child: Container(
-                                    height: 154.0,
-                                    padding: const EdgeInsets.all(4.0),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          margin:
-                                              const EdgeInsets.only(right: 8.0),
-                                          child: Container(
-                                            width: 130.0,
-                                            height: 146.0,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey.shade200,
-                                              borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                            ),
-                                            child: Stack(
-                                              children: [
-                                                Center(
-                                                  child: AspectRatio(
-                                                    aspectRatio: 1 / 1,
-                                                    child: coche[
-                                                                'imagen_url'] !=
-                                                            null
-                                                        ? CachedNetworkImage(
-                                                            imageUrl: coche[
-                                                                'imagen_url'],
-                                                            fit: BoxFit.contain,
-                                                            placeholder:
-                                                                (context,
-                                                                        url) =>
-                                                                    const Icon(
-                                                              Icons.car_rental,
-                                                              size: 50,
-                                                              color:
-                                                                  Colors.grey,
-                                                            ),
-                                                            errorWidget:
-                                                                (context, url,
-                                                                        error) =>
-                                                                    const Icon(
-                                                              Icons
-                                                                  .broken_image,
-                                                              size: 50,
-                                                              color:
-                                                                  Colors.grey,
-                                                            ),
-                                                          )
-                                                        : const Icon(
-                                                            Icons.car_rental,
-                                                            size: 50,
-                                                            color: Colors.grey,
-                                                          ),
-                                                  ),
-                                                ),
-                                                Positioned(
-                                                  top: 4.0,
-                                                  left: 4.0,
-                                                  right: 4.0,
-                                                  child: Text(
-                                                    coche['matricula'] ?? 'N/A',
-                                                    style: const TextStyle(
-                                                      fontSize: 14.0,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.black,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                ),
-                                                Positioned(
-                                                  bottom: 4.0,
-                                                  left: 4.0,
-                                                  right: 4.0,
-                                                  child: Text(
-                                                    coche['estado_coche'] ??
-                                                        'N/A',
-                                                    style: TextStyle(
-                                                      fontSize: 12.0,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: estadoColor,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              _buildInfoRowBold(
-                                                  coche['marca'] ?? 'N/A'),
-                                              _buildInfoRow(
-                                                  coche['modelo'] ?? 'N/A'),
-                                              Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Expanded(
-                                                    flex: 4,
-                                                    child: Row(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        const Icon(
-                                                            Icons
-                                                                .calendar_today,
-                                                            size: 14.0,
-                                                            color: Colors.grey),
-                                                        const SizedBox(
-                                                            width: 4.0),
-                                                        Expanded(
-                                                          child: _buildInfoRow(
-                                                              coche[
-                                                                  'formattedFechaMatriculacion']),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    flex: 6,
-                                                    child: _buildInfoRowRich(
-                                                      textSpans: [
-                                                        TextSpan(
-                                                          text: 'ITV ',
-                                                          style: TextStyle(
-                                                            fontSize: 14.0,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            color: Colors
-                                                                .grey.shade600,
-                                                          ),
-                                                        ),
-                                                        TextSpan(
-                                                          text:
-                                                              coche['itvValue'],
-                                                          style:
-                                                              const TextStyle(
-                                                            fontSize: 14.0,
-                                                            color: Colors.black,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              Row(
-                                                children: [
-                                                  Expanded(
-                                                    flex: 4,
-                                                    child: _buildInfoRowRich(
-                                                      textSpans: [
-                                                        TextSpan(
-                                                          text: '€ ',
-                                                          style: TextStyle(
-                                                            fontSize: 14.0,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            color: Colors
-                                                                .grey.shade600,
-                                                          ),
-                                                        ),
-                                                        TextSpan(
-                                                          text: coche['precio']
-                                                                  ?.toString() ??
-                                                              'N/A',
-                                                          style:
-                                                              const TextStyle(
-                                                            fontSize: 14.0,
-                                                            color: Colors.black,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    flex: 6,
-                                                    child: _buildInfoRowRich(
-                                                      textSpans: [
-                                                        TextSpan(
-                                                          text: 'KM ',
-                                                          style: TextStyle(
-                                                            fontSize: 14.0,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            color: Colors
-                                                                .grey.shade600,
-                                                          ),
-                                                        ),
-                                                        TextSpan(
-                                                          text:
-                                                              coche['kmValue'],
-                                                          style:
-                                                              const TextStyle(
-                                                            fontSize: 14.0,
-                                                            color: Colors.black,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  const Icon(Icons.location_on,
-                                                      size: 14.0,
-                                                      color: Colors.grey),
-                                                  const SizedBox(width: 4.0),
-                                                  Expanded(
-                                                    child: _buildInfoRow(coche[
-                                                        'ubicacionDisplay']),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            _buildRoundButton(
-                                              context,
-                                              Icons.picture_as_pdf,
-                                              () => Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      PdfEditButton(
-                                                    cocheUuid: coche['uuid'],
-                                                    cocheData: coche,
-                                                  ),
-                                                ),
-                                              ).then((_) =>
-                                                  _refreshWithoutScrollLoss()),
-                                            ),
-                                            const SizedBox(height: 1.0),
-                                            _buildRoundButton(
-                                              context,
-                                              Icons.location_on,
-                                              () => showDialog(
-                                                context: context,
-                                                builder: (context) =>
-                                                    UbicacionEditButton(
-                                                  cocheUuid: coche['uuid'],
-                                                  currentUbicacion:
-                                                      coche['ubicacion'],
-                                                ),
-                                              ).then((_) =>
-                                                  _refreshWithoutScrollLoss()),
-                                            ),
-                                            const SizedBox(height: 1.0),
-                                            _buildRoundButton(
-                                              context,
-                                              Icons.checklist,
-                                              () => showDialog(
-                                                context: context,
-                                                builder: (context) =>
-                                                    ChecklistEditButton(
-                                                  cocheUuid: coche['uuid'],
-                                                  currentDiagnostico:
-                                                      coche['diagnostico'],
-                                                  currentFechaItv:
-                                                      coche['fecha_itv'],
-                                                ),
-                                              ).then((_) =>
-                                                  _refreshWithoutScrollLoss()),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                        : kIsWeb
+                            ? GridView.builder(
+                                controller: _scrollController,
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount:
+                                      _calculateCrossAxisCount(context),
+                                  childAspectRatio: 1.0,
+                                  crossAxisSpacing: 8.0,
+                                  mainAxisSpacing: 8.0,
                                 ),
-                              );
-                            },
-                          ),
+                                itemCount: _filteredCoches.length,
+                                itemBuilder: (context, index) {
+                                  return _buildCarCard(context, index);
+                                },
+                              )
+                            : ListView.builder(
+                                controller: _scrollController,
+                                cacheExtent: 1000.0,
+                                itemCount: _filteredCoches.length,
+                                itemBuilder: (context, index) {
+                                  return _buildCarCard(context, index);
+                                },
+                              ),
               ),
             ),
           ],
@@ -862,12 +1069,12 @@ class CochesScreenState extends State<CochesScreen> {
     );
   }
 
-  Widget _buildInfoRow(String value, {double fontSize = 14.0}) {
+  Widget _buildInfoRow(String value) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Text(
         value,
-        style: TextStyle(fontSize: fontSize),
+        style: const TextStyle(fontSize: 14.0),
         overflow: TextOverflow.ellipsis,
       ),
     );
