@@ -8,6 +8,7 @@ class FiltrosAdicionalesScreen extends StatefulWidget {
   final String? initialDiagnostico;
   final String? initialEstadoItv;
   final Set<String>? initialUbicacion;
+  final RangeValues? initialPrecioRango; // Nuevo campo para precio inicial
 
   const FiltrosAdicionalesScreen({
     super.key,
@@ -16,6 +17,7 @@ class FiltrosAdicionalesScreen extends StatefulWidget {
     this.initialDiagnostico,
     this.initialEstadoItv,
     this.initialUbicacion,
+    this.initialPrecioRango, // Añadido
   });
 
   @override
@@ -29,9 +31,15 @@ class FiltrosAdicionalesScreenState extends State<FiltrosAdicionalesScreen> {
   String? _selectedDiagnostico;
   String? _selectedEstadoItv;
   Set<String> _selectedUbicacion = {};
+  RangeValues _selectedPrecioRango =
+      const RangeValues(0, 20000); // Nuevo estado para precio
   List<String> _allUbicaciones = [];
+  bool _isUbicacionExpanded = false;
 
   static const double buttonHeight = 34;
+  static const double precioMin = 0;
+  static const double precioMax = 20000;
+  static const double precioDivision = 1000;
 
   static const List<String> predefinedLocations = [
     'CURVA',
@@ -42,7 +50,6 @@ class FiltrosAdicionalesScreenState extends State<FiltrosAdicionalesScreen> {
     'ESCUELA',
     'IGLESIA',
     'LA PARADA',
-    'CONFORAMA',
     'CANTARO',
     'PRESTADO',
     'FINAL POLIGONO',
@@ -64,7 +71,11 @@ class FiltrosAdicionalesScreenState extends State<FiltrosAdicionalesScreen> {
     _selectedDiagnostico = widget.initialDiagnostico;
     _selectedEstadoItv = widget.initialEstadoItv;
     _selectedUbicacion = widget.initialUbicacion ?? {};
+    _selectedPrecioRango = widget.initialPrecioRango ??
+        const RangeValues(0, 20000); // Inicialización del rango
     dev.log('Inicializando filtros - Ubicación inicial: $_selectedUbicacion');
+    dev.log(
+        'Inicializando filtros - Rango de precio inicial: $_selectedPrecioRango');
     _fetchUbicaciones();
   }
 
@@ -105,7 +116,6 @@ class FiltrosAdicionalesScreenState extends State<FiltrosAdicionalesScreen> {
     return Container(
       padding: const EdgeInsets.all(4.0),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFF0053A0), width: 1.0),
         borderRadius: BorderRadius.circular(8.0),
       ),
       child: Column(
@@ -114,22 +124,28 @@ class FiltrosAdicionalesScreenState extends State<FiltrosAdicionalesScreen> {
           Text(
             label,
             style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: Colors.black87,
+              fontSize: 14.0,
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
             ),
           ),
           const SizedBox(height: 2),
-          Row(
-            children: options.map((option) {
-              final String value = option['value']!;
-              final String text = option['text']!;
-              final bool isSelected = selectedValue == value;
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const double spacing = 3.0;
+              const double totalSpacing = spacing * 2;
+              double buttonWidth = (constraints.maxWidth - totalSpacing) / 2;
 
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                  child: SizedBox(
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: options.map((option) {
+                  final String value = option['value']!;
+                  final String text = option['text']!;
+                  final bool isSelected = selectedValue == value;
+
+                  return SizedBox(
+                    width: buttonWidth,
                     height: buttonHeight,
                     child: OutlinedButton(
                       onPressed: () {
@@ -152,28 +168,88 @@ class FiltrosAdicionalesScreenState extends State<FiltrosAdicionalesScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 2),
                       ),
                       child: Text(
                         text,
                         style: TextStyle(
                           color: isSelected ? Colors.white : Colors.black87,
                           fontSize: label == 'Diagnóstico' &&
-                                  text == 'REQUIERE MANTENIMIENTO'
+                                  value == 'REQUIERE MANTENIMIENTO'
                               ? 12
                               : 14,
                           fontWeight:
                               isSelected ? FontWeight.w600 : FontWeight.w500,
                         ),
                         textAlign: TextAlign.center,
-                        maxLines: twoLines ? 2 : 1,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ),
-                ),
+                  );
+                }).toList(),
               );
-            }).toList(),
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrecioFilter({
+    required String label,
+    required RangeValues selectedRange,
+    required ValueChanged<RangeValues> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(4.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14.0,
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '€${selectedRange.start.round()}',
+                style: const TextStyle(fontSize: 14.0, color: Colors.black87),
+              ),
+              Text(
+                '€${selectedRange.end.round()}',
+                style: const TextStyle(fontSize: 14.0, color: Colors.black87),
+              ),
+            ],
+          ),
+          RangeSlider(
+            values: selectedRange,
+            min: precioMin,
+            max: precioMax,
+            divisions: ((precioMax - precioMin) / precioDivision).round(),
+            labels: RangeLabels(
+              '€${selectedRange.start.round()}',
+              '€${selectedRange.end.round()}',
+            ),
+            activeColor: const Color.fromARGB(255, 0, 114, 15),
+            inactiveColor: Colors.grey[300],
+            onChanged: (RangeValues values) {
+              setState(() {
+                onChanged(values);
+                dev.log(
+                    'Rango de precio actualizado: ${values.start} - ${values.end}');
+              });
+            },
           ),
         ],
       ),
@@ -189,134 +265,161 @@ class FiltrosAdicionalesScreenState extends State<FiltrosAdicionalesScreen> {
     return Container(
       padding: const EdgeInsets.all(4.0),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFF0053A0), width: 1.0),
         borderRadius: BorderRadius.circular(8.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: Colors.black87,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14.0,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
+              ),
+              Theme(
+                data: Theme.of(context).copyWith(
+                  iconTheme: const IconThemeData(color: Colors.black),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    _isUbicacionExpanded
+                        ? Icons.expand_less
+                        : Icons.expand_more,
+                    size: 24,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isUbicacionExpanded = !_isUbicacionExpanded;
+                      dev.log(
+                          'Sección Ubicación ${_isUbicacionExpanded ? 'expandida' : 'contraída'}');
+                    });
+                  },
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 2.0),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              const double spacing = 3.0;
-              const double totalSpacing = spacing * 2;
-              double buttonWidth = (constraints.maxWidth - totalSpacing) / 3;
-              if (buttonWidth < 0) buttonWidth = constraints.maxWidth / 3;
+          if (_isUbicacionExpanded) ...[
+            const SizedBox(height: 2.0),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const double spacing = 3.0;
+                const double totalSpacing = spacing * 1;
+                double buttonWidth = (constraints.maxWidth - totalSpacing) / 2;
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: groupedOptions.entries.map((group) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2.0),
-                        child: Text(
-                          group.key,
-                          style: const TextStyle(
-                            fontSize: 14.0,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black54,
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: groupedOptions.entries.map((group) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2.0),
+                          child: Text(
+                            group.key,
+                            style: const TextStyle(
+                              fontSize: 14.0,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black54,
+                            ),
                           ),
                         ),
-                      ),
-                      Wrap(
-                        spacing: spacing,
-                        runSpacing: spacing,
-                        children: group.value.map((option) {
-                          final String value = option['value']!;
-                          final String text = option['text']!;
-                          final bool isSelected =
-                              selectedValues.contains(value);
+                        Wrap(
+                          spacing: spacing,
+                          runSpacing: spacing,
+                          children: group.value.map((option) {
+                            final String value = option['value']!;
+                            final String text = option['text']!;
+                            final bool isSelected =
+                                selectedValues.contains(value);
 
-                          return SizedBox(
-                            width: buttonWidth,
-                            height: buttonHeight,
-                            child: OutlinedButton(
-                              onPressed: () {
-                                setState(() {
-                                  final newSelectedValues =
-                                      Set<String>.from(selectedValues);
-                                  if (value == 'OTROS') {
-                                    if (isSelected) {
-                                      newSelectedValues.remove('OTROS');
-                                      newSelectedValues.removeWhere((v) =>
-                                          !predefinedLocations.contains(v));
-                                      dev.log('OTROS deseleccionado');
+                            return SizedBox(
+                              width: buttonWidth,
+                              height: buttonHeight,
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    final newSelectedValues =
+                                        Set<String>.from(selectedValues);
+                                    if (value == 'OTROS') {
+                                      if (isSelected) {
+                                        newSelectedValues.remove('OTROS');
+                                        newSelectedValues.removeWhere((v) =>
+                                            !predefinedLocations.contains(v));
+                                        dev.log('OTROS deseleccionado');
+                                      } else {
+                                        newSelectedValues.add('OTROS');
+                                        newSelectedValues.removeWhere((v) =>
+                                            predefinedLocations.contains(v));
+                                        dev.log('OTROS seleccionado');
+                                      }
                                     } else {
-                                      newSelectedValues.add('OTROS');
-                                      newSelectedValues.removeWhere((v) =>
-                                          predefinedLocations.contains(v));
-                                      dev.log('OTROS seleccionado');
+                                      if (isSelected) {
+                                        newSelectedValues.remove(value);
+                                      } else {
+                                        newSelectedValues.add(value);
+                                        newSelectedValues.remove('OTROS');
+                                        newSelectedValues.removeWhere((v) =>
+                                            !predefinedLocations.contains(v));
+                                      }
                                     }
-                                  } else {
-                                    if (isSelected) {
-                                      newSelectedValues.remove(value);
-                                    } else {
-                                      newSelectedValues.add(value);
-                                      newSelectedValues.remove('OTROS');
-                                      newSelectedValues.removeWhere((v) =>
-                                          !predefinedLocations.contains(v));
-                                    }
-                                  }
-                                  onChanged(newSelectedValues);
-                                  dev.log(
-                                      'Ubicación seleccionada: $newSelectedValues');
-                                });
-                              },
-                              style: OutlinedButton.styleFrom(
-                                backgroundColor: isSelected
-                                    ? const Color.fromARGB(255, 0, 114, 15)
-                                    : Colors.white,
-                                foregroundColor:
-                                    isSelected ? Colors.white : Colors.black87,
-                                side: BorderSide(
-                                    color: isSelected
-                                        ? const Color.fromARGB(255, 0, 114, 15)
-                                        : const Color(0xFF0053A0),
-                                    width: 1.0),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 4, vertical: 2),
-                              ),
-                              child: Text(
-                                text,
-                                style: TextStyle(
-                                  color: isSelected
+                                    onChanged(newSelectedValues);
+                                    dev.log(
+                                        'Ubicación seleccionada: $newSelectedValues');
+                                  });
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: isSelected
+                                      ? const Color.fromARGB(255, 0, 114, 15)
+                                      : Colors.white,
+                                  foregroundColor: isSelected
                                       ? Colors.white
                                       : Colors.black87,
-                                  fontSize: (text == 'FINAL POLIGONO' ||
-                                          text == 'CHILCHES')
-                                      ? 13
-                                      : 14,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w500,
+                                  side: BorderSide(
+                                      color: isSelected
+                                          ? const Color.fromARGB(
+                                              255, 0, 114, 15)
+                                          : const Color(0xFF0053A0),
+                                      width: 1.0),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 4, vertical: 2),
                                 ),
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
+                                child: Text(
+                                  text,
+                                  style: TextStyle(
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.black87,
+                                    fontSize: (text == 'FINAL POLIGONO' ||
+                                            text == 'CHILCHES')
+                                        ? 13
+                                        : 14,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  );
-                }).toList(),
-              );
-            },
-          ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+          ],
         ],
       ),
     );
@@ -340,6 +443,10 @@ class FiltrosAdicionalesScreenState extends State<FiltrosAdicionalesScreen> {
       'estado_itv': _selectedEstadoItv,
       'ubicacion':
           selectedUbicaciones.isNotEmpty ? selectedUbicaciones.join(',') : null,
+      'precio_rango': {
+        'min': _selectedPrecioRango.start,
+        'max': _selectedPrecioRango.end,
+      }, // Añadido el rango de precios
     };
 
     Navigator.of(context).pop(filters);
@@ -357,7 +464,6 @@ class FiltrosAdicionalesScreenState extends State<FiltrosAdicionalesScreen> {
         {'text': 'ESCUELA', 'value': 'ESCUELA'},
         {'text': 'IGLESIA', 'value': 'IGLESIA'},
         {'text': 'LA PARADA', 'value': 'LA PARADA'},
-        {'text': 'CONFORAMA', 'value': 'CONFORAMA'},
         {'text': 'CANTARO', 'value': 'CANTARO'},
         {'text': 'PRESTADO', 'value': 'PRESTADO'},
         {'text': 'OTROS', 'value': 'OTROS'},
@@ -378,152 +484,152 @@ class FiltrosAdicionalesScreenState extends State<FiltrosAdicionalesScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
-          _returnFilters();
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(null);
         }
       },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFE6F0FA),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF0053A0),
-          elevation: 0,
-          toolbarHeight: 60.0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
-            onPressed: _returnFilters,
+      child: AlertDialog(
+        backgroundColor: Colors.white,
+        contentPadding: const EdgeInsets.all(4.0),
+        titlePadding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Filtros Adicionales',
+              style: TextStyle(fontSize: 16.0),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _selectedEstadoDocumentos = null;
+                  _selectedEstadoPublicacion = null;
+                  _selectedDiagnostico = null;
+                  _selectedEstadoItv = null;
+                  _selectedUbicacion.clear();
+                  _selectedPrecioRango =
+                      const RangeValues(0, 20000); // Resetea el rango
+                  dev.log('Filtros limpiados');
+                });
+              },
+              style: ButtonStyle(
+                minimumSize: WidgetStateProperty.all(const Size(80.0, 32.0)),
+                padding: WidgetStateProperty.all(EdgeInsets.zero),
+                textStyle: WidgetStateProperty.all(
+                  const TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold),
+                ),
+              ),
+              child: const Text('Limpiar'),
+            ),
+          ],
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: 300,
+            maxWidth: 300,
+            maxHeight: 450,
           ),
-          title: const Text(
-            'Filtros Adicionales',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(4.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildPrecioFilter(
+                    label: 'Rango de Precio',
+                    selectedRange: _selectedPrecioRango,
+                    onChanged: (val) =>
+                        setState(() => _selectedPrecioRango = val),
+                  ),
+                  const SizedBox(height: 6.0),
+                  _buildFilterSelection(
+                    label: 'Estado ITV',
+                    selectedValue: _selectedEstadoItv,
+                    options: [
+                      {'text': 'VENCIDA', 'value': 'VENCIDA'},
+                      {'text': 'VIGENTE', 'value': 'VIGENTE'},
+                    ],
+                    onChanged: (val) =>
+                        setState(() => _selectedEstadoItv = val),
+                  ),
+                  const SizedBox(height: 6.0),
+                  _buildFilterSelection(
+                    label: 'Estado Documentos',
+                    selectedValue: _selectedEstadoDocumentos,
+                    options: [
+                      {'text': 'PENDIENTE', 'value': 'PENDIENTE'},
+                      {'text': 'RECIBIDA', 'value': 'RECIBIDA'},
+                    ],
+                    onChanged: (val) =>
+                        setState(() => _selectedEstadoDocumentos = val),
+                  ),
+                  const SizedBox(height: 6.0),
+                  _buildFilterSelection(
+                    label: 'Estado de Publicación',
+                    selectedValue: _selectedEstadoPublicacion,
+                    options: [
+                      {'text': 'POR PUBLICAR', 'value': 'POR PUBLICAR'},
+                      {'text': 'PUBLICADO', 'value': 'PUBLICADO'},
+                    ],
+                    onChanged: (val) =>
+                        setState(() => _selectedEstadoPublicacion = val),
+                  ),
+                  const SizedBox(height: 6.0),
+                  _buildFilterSelection(
+                    label: 'Diagnóstico',
+                    selectedValue: _selectedDiagnostico,
+                    options: [
+                      {
+                        'text': 'REQ. MANTENIMIENTO',
+                        'value': 'REQUIERE MANTENIMIENTO'
+                      },
+                      {'text': 'LISTO PARA VENTA', 'value': 'LISTO PARA VENTA'},
+                    ],
+                    onChanged: (val) =>
+                        setState(() => _selectedDiagnostico = val),
+                    twoLines: false,
+                  ),
+                  const SizedBox(height: 6.0),
+                  _buildUbicacionFilter(
+                    label: 'Ubicación',
+                    selectedValues: _selectedUbicacion,
+                    groupedOptions: ubicaciones,
+                    onChanged: (val) =>
+                        setState(() => _selectedUbicacion = val),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8.0, vertical: 4.0),
-                  child: Column(
-                    children: [
-                      _buildFilterSelection(
-                        label: 'Estado ITV',
-                        selectedValue: _selectedEstadoItv,
-                        options: [
-                          {'text': 'VENCIDA', 'value': 'VENCIDA'},
-                          {'text': 'VIGENTE', 'value': 'VIGENTE'},
-                        ],
-                        onChanged: (val) =>
-                            setState(() => _selectedEstadoItv = val),
-                      ),
-                      const SizedBox(height: 6.0),
-                      _buildFilterSelection(
-                        label: 'Estado Documentos',
-                        selectedValue: _selectedEstadoDocumentos,
-                        options: [
-                          {'text': 'PENDIENTE', 'value': 'PENDIENTE'},
-                          {'text': 'RECIBIDA', 'value': 'RECIBIDA'},
-                        ],
-                        onChanged: (val) =>
-                            setState(() => _selectedEstadoDocumentos = val),
-                      ),
-                      const SizedBox(height: 6.0),
-                      _buildFilterSelection(
-                        label: 'Estado de Publicación',
-                        selectedValue: _selectedEstadoPublicacion,
-                        options: [
-                          {'text': 'POR PUBLICAR', 'value': 'POR PUBLICAR'},
-                          {'text': 'PUBLICADO', 'value': 'PUBLICADO'},
-                        ],
-                        onChanged: (val) =>
-                            setState(() => _selectedEstadoPublicacion = val),
-                      ),
-                      const SizedBox(height: 6.0),
-                      _buildFilterSelection(
-                        label: 'Diagnóstico',
-                        selectedValue: _selectedDiagnostico,
-                        options: [
-                          {
-                            'text': 'REQUIERE MANTENIMIENTO',
-                            'value': 'REQUIERE MANTENIMIENTO'
-                          },
-                          {
-                            'text': 'LISTO PARA VENTA',
-                            'value': 'LISTO PARA VENTA'
-                          },
-                        ],
-                        onChanged: (val) =>
-                            setState(() => _selectedDiagnostico = val),
-                      ),
-                      const SizedBox(height: 6.0),
-                      _buildUbicacionFilter(
-                        label: 'Ubicación',
-                        selectedValues: _selectedUbicacion,
-                        groupedOptions: ubicaciones,
-                        onChanged: (val) =>
-                            setState(() => _selectedUbicacion = val),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _selectedEstadoDocumentos = null;
-                            _selectedEstadoPublicacion = null;
-                            _selectedDiagnostico = null;
-                            _selectedEstadoItv = null;
-                            _selectedUbicacion.clear();
-                            dev.log('Filtros limpiados');
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey.shade300,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          side: BorderSide.none,
-                          elevation: 2,
-                          shadowColor: Colors.black26,
-                        ),
-                        child: const Text('Limpiar filtros',
-                            style:
-                                TextStyle(fontSize: 15, color: Colors.black)),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _returnFilters,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0053A0),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          side: BorderSide.none,
-                          elevation: 2,
-                          shadowColor: Colors.black26,
-                        ),
-                        child: const Text('Aplicar filtros',
-                            style:
-                                TextStyle(fontSize: 15, color: Colors.white)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            style: ButtonStyle(
+              minimumSize: WidgetStateProperty.all(const Size(100.0, 38.0)),
+              padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0)),
+            ),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(fontSize: 14.0),
+            ),
           ),
-        ),
+          ElevatedButton(
+            onPressed: _returnFilters,
+            style: ButtonStyle(
+              minimumSize: WidgetStateProperty.all(const Size(100.0, 38.0)),
+              padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0)),
+            ),
+            child: const Text(
+              'Aplicar filtros',
+              style: TextStyle(fontSize: 14.0),
+            ),
+          ),
+        ],
       ),
     );
   }

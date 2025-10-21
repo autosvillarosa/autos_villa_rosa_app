@@ -52,6 +52,9 @@ class LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final baseFontSize =
+        Theme.of(context).textTheme.bodyMedium?.fontSize ?? 16.0;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -63,23 +66,13 @@ class LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo with white circular background
-                  Container(
-                    width: 150.0, // Increased size to ensure full coverage
-                    height: 150.0,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    padding: const EdgeInsets.all(20.0), // Adjusted padding
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/images/logo_avs.png',
-                        height: 100.0, // Logo size
-                        width: 100.0,
-                        fit: BoxFit
-                            .contain, // Ensure logo fits within the clipped area
-                      ),
+                  // Logo sin borde blanco, más grande
+                  ClipOval(
+                    child: Image.asset(
+                      'assets/images/logo_avs.png',
+                      height: 150.0, // Aumentado para llenar el espacio
+                      width: 150.0, // Aumentado para llenar el espacio
+                      fit: BoxFit.cover,
                     ),
                   ),
                   const SizedBox(height: 24.0),
@@ -90,58 +83,70 @@ class LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24.0),
                   // Campo de usuario
-                  Container(
-                    margin: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: TextField(
-                      controller: _usernameController,
-                      decoration: InputDecoration(
-                        labelText: 'Nombre de Usuario',
-                        labelStyle:
-                            Theme.of(context).inputDecorationTheme.labelStyle,
-                        prefixIcon: const Icon(Icons.person, size: 20.0),
-                        contentPadding: Theme.of(context)
-                            .inputDecorationTheme
-                            .contentPadding,
-                        filled: Theme.of(context).inputDecorationTheme.filled,
-                        fillColor:
-                            Theme.of(context).inputDecorationTheme.fillColor,
-                        border: Theme.of(context).inputDecorationTheme.border,
-                        enabledBorder: Theme.of(context)
-                            .inputDecorationTheme
-                            .enabledBorder,
-                        focusedBorder: Theme.of(context)
-                            .inputDecorationTheme
-                            .focusedBorder,
+                  SizedBox(
+                    width: 300.0,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: TextField(
+                        controller: _usernameController,
+                        decoration: InputDecoration(
+                          labelText: 'Nombre de Usuario',
+                          labelStyle:
+                              Theme.of(context).inputDecorationTheme.labelStyle,
+                          prefixIcon: const Icon(Icons.person, size: 20.0),
+                          contentPadding: Theme.of(context)
+                              .inputDecorationTheme
+                              .contentPadding,
+                          filled: Theme.of(context).inputDecorationTheme.filled,
+                          fillColor:
+                              Theme.of(context).inputDecorationTheme.fillColor,
+                          border: Theme.of(context).inputDecorationTheme.border,
+                          enabledBorder: Theme.of(context)
+                              .inputDecorationTheme
+                              .enabledBorder,
+                          focusedBorder: Theme.of(context)
+                              .inputDecorationTheme
+                              .focusedBorder,
+                        ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(fontSize: baseFontSize + 1),
                       ),
-                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ),
                   // Campo de contraseña
-                  Container(
-                    margin: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: TextField(
-                      controller: _passwordController,
-                      decoration: InputDecoration(
-                        labelText: 'Clave',
-                        labelStyle:
-                            Theme.of(context).inputDecorationTheme.labelStyle,
-                        prefixIcon: const Icon(Icons.lock, size: 20.0),
-                        contentPadding: Theme.of(context)
-                            .inputDecorationTheme
-                            .contentPadding,
-                        filled: Theme.of(context).inputDecorationTheme.filled,
-                        fillColor:
-                            Theme.of(context).inputDecorationTheme.fillColor,
-                        border: Theme.of(context).inputDecorationTheme.border,
-                        enabledBorder: Theme.of(context)
-                            .inputDecorationTheme
-                            .enabledBorder,
-                        focusedBorder: Theme.of(context)
-                            .inputDecorationTheme
-                            .focusedBorder,
+                  SizedBox(
+                    width: 300.0,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: TextField(
+                        controller: _passwordController,
+                        decoration: InputDecoration(
+                          labelText: 'Clave',
+                          labelStyle:
+                              Theme.of(context).inputDecorationTheme.labelStyle,
+                          prefixIcon: const Icon(Icons.lock, size: 20.0),
+                          contentPadding: Theme.of(context)
+                              .inputDecorationTheme
+                              .contentPadding,
+                          filled: Theme.of(context).inputDecorationTheme.filled,
+                          fillColor:
+                              Theme.of(context).inputDecorationTheme.fillColor,
+                          border: Theme.of(context).inputDecorationTheme.border,
+                          enabledBorder: Theme.of(context)
+                              .inputDecorationTheme
+                              .enabledBorder,
+                          focusedBorder: Theme.of(context)
+                              .inputDecorationTheme
+                              .focusedBorder,
+                        ),
+                        obscureText: true,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(fontSize: baseFontSize + 1),
                       ),
-                      obscureText: true,
-                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ),
                   // Mensaje de error
@@ -163,7 +168,6 @@ class LoginScreenState extends State<LoginScreen> {
                     style: Theme.of(context).elevatedButtonTheme.style,
                     child: const Text(
                       'Ingresar',
-                      // El estilo del texto ya está definido en elevatedButtonTheme
                     ),
                   ),
                 ],

@@ -19,6 +19,7 @@ class _UbicacionEditButtonState extends State<UbicacionEditButton> {
   String? _currentUbicacion;
   String? _selectedUbicacion;
   String _customUbicacion = '';
+  bool _showConfirmation = false; // Nueva variable para controlar el diálogo
 
   final Map<String, List<String>> _ubicaciones = {
     'Málaga': [
@@ -49,9 +50,18 @@ class _UbicacionEditButtonState extends State<UbicacionEditButton> {
   void initState() {
     super.initState();
     _currentUbicacion = widget.currentUbicacion;
+    // Inicializar _selectedUbicacion si _currentUbicacion coincide con una ubicación predefinida
+    if (_currentUbicacion != null &&
+        _ubicaciones.values.any((list) => list.contains(_currentUbicacion))) {
+      _selectedUbicacion = _currentUbicacion;
+    }
+    // Mostrar confirmación si la ubicación es "Por llegar"
+    _showConfirmation = _currentUbicacion != null &&
+        _currentUbicacion!.toUpperCase() == 'POR LLEGAR';
   }
 
   Future<void> _updateUbicacion(String newUbicacion) async {
+    if (!mounted) return; // Verificación adicional
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     try {
@@ -60,7 +70,8 @@ class _UbicacionEditButtonState extends State<UbicacionEditButton> {
         'ubicacion_update': DateTime.now().toIso8601String(),
       };
 
-      if (_currentUbicacion == 'Por llegar' && newUbicacion != 'Por llegar') {
+      if (_currentUbicacion?.toUpperCase() == 'POR LLEGAR' &&
+          newUbicacion.toUpperCase() != 'POR LLEGAR') {
         updates['estado_coche'] = 'Disponible';
         updates['fecha_llegada'] = DateTime.now().toIso8601String();
       }
@@ -77,7 +88,7 @@ class _UbicacionEditButtonState extends State<UbicacionEditButton> {
             duration: Duration(seconds: 1),
           ),
         );
-        navigator.pop();
+        navigator.pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -95,165 +106,189 @@ class _UbicacionEditButtonState extends State<UbicacionEditButton> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: Colors.white,
-      title: Text(
-        'Editar Ubicación${_currentUbicacion != null ? ' ($_currentUbicacion)' : ''}',
-      ),
+      title: Text(_showConfirmation
+          ? 'Confirmar Cambio de Ubicación'
+          : 'Editar Ubicación'),
       contentPadding: const EdgeInsets.all(4.0),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(
-          minWidth: 300,
-          maxWidth: 300,
-          maxHeight: 450,
-        ),
-        child: SingleChildScrollView(
-          child: Container(
-            padding: const EdgeInsets.all(4.0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ..._ubicaciones.entries.map((entry) {
-                  return Column(
+      content: _showConfirmation
+          ? const Text(
+              'El coche estaba por llegar. ¿Está seguro de que ya ha llegado? Haga click en continuar para proceder.',
+              style: TextStyle(fontSize: 14.0),
+            )
+          : ConstrainedBox(
+              constraints: const BoxConstraints(
+                minWidth: 300,
+                maxWidth: 300,
+                maxHeight: 450,
+              ),
+              child: SingleChildScrollView(
+                child: Container(
+                  padding: const EdgeInsets.all(4.0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2.0),
-                        child: Text(
-                          entry.key,
-                          style: const TextStyle(
-                            fontSize: 14.0,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black54,
-                          ),
+                      ..._ubicaciones.entries.map((entry) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 2.0),
+                              child: Text(
+                                entry.key,
+                                style: const TextStyle(
+                                  fontSize: 14.0,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 2.0),
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                const double spacing = 3.0;
+                                const double totalSpacing = spacing * 2;
+                                double buttonWidth =
+                                    (constraints.maxWidth - totalSpacing) / 2;
+
+                                return Wrap(
+                                  spacing: spacing,
+                                  runSpacing: spacing,
+                                  children: entry.value.map((ubicacion) {
+                                    final isSelected =
+                                        _selectedUbicacion == ubicacion ||
+                                            (_selectedUbicacion == null &&
+                                                _currentUbicacion == ubicacion);
+                                    return SizedBox(
+                                      width: buttonWidth,
+                                      height: 34.0,
+                                      child: OutlinedButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _selectedUbicacion = ubicacion;
+                                            _customUbicacion = '';
+                                          });
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          backgroundColor: isSelected
+                                              ? const Color.fromARGB(
+                                                  255, 0, 114, 15)
+                                              : Colors.white,
+                                          foregroundColor: isSelected
+                                              ? Colors.white
+                                              : Colors.black87,
+                                          side: BorderSide(
+                                              color: isSelected
+                                                  ? const Color.fromARGB(
+                                                      255, 0, 114, 15)
+                                                  : const Color(0xFF0053A0),
+                                              width: 1.0),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8.0),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 4, vertical: 2),
+                                        ),
+                                        child: Text(
+                                          ubicacion,
+                                          style: TextStyle(
+                                            color: isSelected
+                                                ? Colors.white
+                                                : Colors.black87,
+                                            fontSize: (ubicacion ==
+                                                        'FINAL POLÍGONO' ||
+                                                    ubicacion == 'CHILCHES')
+                                                ? 13
+                                                : 14,
+                                            fontWeight: isSelected
+                                                ? FontWeight.w600
+                                                : FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 6.0),
+                          ],
+                        );
+                      }),
+                      TextField(
+                        onChanged: (value) {
+                          setState(() {
+                            _customUbicacion = value;
+                            _selectedUbicacion = null;
+                          });
+                        },
+                        decoration: const InputDecoration(
+                          labelText: 'Nueva ubicación',
+                          border: OutlineInputBorder(),
                         ),
                       ),
-                      const SizedBox(height: 2.0),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          const double spacing = 3.0;
-                          const double totalSpacing = spacing * 2;
-                          double buttonWidth =
-                              (constraints.maxWidth - totalSpacing) / 2;
-
-                          return Wrap(
-                            spacing: spacing,
-                            runSpacing: spacing,
-                            children: entry.value.map((ubicacion) {
-                              final isSelected =
-                                  _selectedUbicacion == ubicacion;
-                              return SizedBox(
-                                width: buttonWidth,
-                                height: 34.0,
-                                child: OutlinedButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _selectedUbicacion = ubicacion;
-                                      _customUbicacion = '';
-                                    });
-                                  },
-                                  style: OutlinedButton.styleFrom(
-                                    backgroundColor: isSelected
-                                        ? const Color.fromARGB(255, 0, 114, 15)
-                                        : Colors.white,
-                                    foregroundColor: isSelected
-                                        ? Colors.white
-                                        : Colors.black87,
-                                    side: BorderSide(
-                                        color: isSelected
-                                            ? const Color.fromARGB(
-                                                255, 0, 114, 15)
-                                            : const Color(0xFF0053A0),
-                                        width: 1.0),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 4, vertical: 2),
-                                  ),
-                                  child: Text(
-                                    ubicacion,
-                                    style: TextStyle(
-                                      color: isSelected
-                                          ? Colors.white
-                                          : Colors.black87,
-                                      fontSize:
-                                          (ubicacion == 'FINAL POLÍGONO' ||
-                                                  ubicacion == 'CHILCHES')
-                                              ? 13
-                                              : 14,
-                                      fontWeight: isSelected
-                                          ? FontWeight.w600
-                                          : FontWeight.w500,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 6.0),
                     ],
-                  );
-                }),
-                TextField(
-                  onChanged: (value) {
-                    setState(() {
-                      _customUbicacion = value;
-                      _selectedUbicacion = null;
-                    });
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'Nueva ubicación',
-                    border: OutlineInputBorder(),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, false),
           child: const Text(
             'Cancelar',
             style: TextStyle(fontSize: 14.0),
           ),
         ),
-        ElevatedButton(
-          onPressed: () {
-            final scaffoldMessenger = ScaffoldMessenger.of(context);
-            final newUbicacion = _selectedUbicacion ?? _customUbicacion.trim();
-            if (newUbicacion.isNotEmpty) {
-              final capitalizedUbicacion = newUbicacion.isNotEmpty
-                  ? newUbicacion[0].toUpperCase() + newUbicacion.substring(1)
-                  : newUbicacion;
-              _updateUbicacion(capitalizedUbicacion);
-            } else {
-              if (mounted) {
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Por favor, seleccione o ingrese una ubicación válida',
+        if (_showConfirmation)
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _showConfirmation = false; // Cambiar al diálogo de edición
+              });
+            },
+            child: const Text(
+              'Continuar',
+              style: TextStyle(fontSize: 14.0),
+            ),
+          )
+        else
+          ElevatedButton(
+            onPressed: () {
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final newUbicacion =
+                  _selectedUbicacion ?? _customUbicacion.trim();
+              if (newUbicacion.isNotEmpty) {
+                final capitalizedUbicacion = newUbicacion.isNotEmpty
+                    ? newUbicacion[0].toUpperCase() + newUbicacion.substring(1)
+                    : newUbicacion;
+                _updateUbicacion(capitalizedUbicacion);
+              } else {
+                if (mounted) {
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Por favor, seleccione o ingrese una ubicación válida',
+                      ),
+                      duration: Duration(seconds: 1),
                     ),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
+                  );
+                }
               }
-            }
-          },
-          child: const Text(
-            'Guardar',
-            style: TextStyle(fontSize: 14.0),
+            },
+            child: const Text(
+              'Guardar',
+              style: TextStyle(fontSize: 14.0),
+            ),
           ),
-        ),
       ],
     );
   }
