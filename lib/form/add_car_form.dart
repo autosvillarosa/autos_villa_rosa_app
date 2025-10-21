@@ -52,7 +52,7 @@ class AddCarFormState extends State<AddCarForm> {
       lastDate: DateTime(2100),
       builder: (context, child) {
         return Theme(
-          data: Theme.of(context), // Hereda el tema global
+          data: Theme.of(context),
           child: child!,
         );
       },
@@ -187,6 +187,11 @@ class AddCarFormState extends State<AddCarForm> {
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: const TextStyle(
+          fontSize: 14.0,
+          fontWeight: FontWeight.w600,
+          color: Colors.black54,
+        ),
       ),
       validator: (value) =>
           value == null || value.isEmpty ? 'Campo obligatorio' : null,
@@ -212,200 +217,353 @@ class AddCarFormState extends State<AddCarForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Añadir Coche'),
-      ),
-      body: SafeArea(
-        child: Container(
-          color: Theme.of(context).canvasColor,
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _fechaAltaController,
-                    readOnly: true,
-                    onTap: () => _pickDate(_fechaAltaController),
-                    decoration: const InputDecoration(labelText: 'Fecha Alta'),
-                    validator: (value) => value == null || value.isEmpty
-                        ? 'Campo obligatorio'
-                        : null,
-                  ),
-                  const SizedBox(height: 8.0),
-                  TextFormField(
-                    controller: _fechaMatriculacionController,
-                    readOnly: true,
-                    onTap: () => _pickDate(_fechaMatriculacionController),
-                    decoration:
-                        const InputDecoration(labelText: 'Fecha Matriculación'),
-                    validator: (value) => value == null || value.isEmpty
-                        ? 'Campo obligatorio'
-                        : null,
-                  ),
-                  const SizedBox(height: 8.0),
-                  TextFormField(
-                    controller: _matriculaController,
-                    decoration: const InputDecoration(labelText: 'Matrícula'),
-                    textCapitalization: TextCapitalization.characters,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-                    ],
-                    validator: (value) => value == null || value.isEmpty
-                        ? 'Campo obligatorio'
-                        : null,
-                  ),
-                  const SizedBox(height: 8.0),
-                  TextFormField(
-                    controller: _marcaController,
-                    decoration: const InputDecoration(labelText: 'Marca'),
-                    textCapitalization: TextCapitalization.sentences,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                          RegExp(r'[a-zA-Z0-9 ]')),
-                    ],
-                    validator: (value) => value == null || value.isEmpty
-                        ? 'Campo obligatorio'
-                        : null,
-                  ),
-                  const SizedBox(height: 8.0),
-                  TextFormField(
-                    controller: _modeloController,
-                    decoration: const InputDecoration(labelText: 'Modelo'),
-                    textCapitalization: TextCapitalization.sentences,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                          RegExp(r'[a-zA-Z0-9 ]')),
-                    ],
-                    validator: (value) => value == null || value.isEmpty
-                        ? 'Campo obligatorio'
-                        : null,
-                  ),
-                  const SizedBox(height: 8.0),
-                  TextFormField(
-                    controller: _bastidorController,
-                    decoration: const InputDecoration(labelText: 'Bastidor'),
-                    textCapitalization: TextCapitalization.characters,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-                    ],
-                    validator: (value) => value == null || value.isEmpty
-                        ? 'Campo obligatorio'
-                        : null,
-                  ),
-                  const SizedBox(height: 8.0),
-                  _numField(_cvController, 'CV'),
-                  const SizedBox(height: 8.0),
-                  _numField(_ccController, 'CC'),
-                  const SizedBox(height: 8.0),
-                  _numField(_kmController, 'Kilómetros'),
-                  const SizedBox(height: 8.0),
-                  _numField(_precioController, 'Precio (€)'),
-                  const SizedBox(height: 8.0),
-                  DropdownButtonFormField<String>(
-                    initialValue: _transmision,
-                    decoration: const InputDecoration(labelText: 'Transmisión'),
-                    items: ['Automático', 'Manual', 'Híbrido']
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _transmision = v),
-                    validator: (value) =>
-                        value == null ? 'Campo obligatorio' : null,
-                  ),
-                  const SizedBox(height: 8.0),
-                  DropdownButtonFormField<String>(
-                    initialValue: _tipoCoche,
-                    decoration:
-                        const InputDecoration(labelText: 'Tipo de Coche'),
-                    items: [
-                      'Berlina',
-                      'Hatchback',
-                      '4x4',
-                      'Coupe',
-                      'Descapotable',
-                      'Monovolumen',
-                      'Furgoneta'
-                    ]
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _tipoCoche = v),
-                    validator: (value) =>
-                        value == null ? 'Campo obligatorio' : null,
-                  ),
-                  const SizedBox(height: 8.0),
-                  DropdownButtonFormField<String>(
-                    initialValue: _tipoCombustible,
-                    decoration:
-                        const InputDecoration(labelText: 'Tipo Combustible'),
-                    items: ['Diésel', 'Gasolina']
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _tipoCombustible = v),
-                    validator: (value) =>
-                        value == null ? 'Campo obligatorio' : null,
-                  ),
-                  const SizedBox(height: 8.0),
-                  DropdownButtonFormField<String>(
-                    initialValue: _origenMarca,
-                    decoration:
-                        const InputDecoration(labelText: 'Origen Marca'),
-                    items: ['Europeo', 'Asiático', 'Americano']
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _origenMarca = v),
-                    validator: (value) =>
-                        value == null ? 'Campo obligatorio' : null,
-                  ),
-                  const SizedBox(height: 8.0),
-                  TextFormField(
-                    controller: _origenTrasladoController,
-                    decoration:
-                        const InputDecoration(labelText: 'Origen Traslado'),
-                    textCapitalization: TextCapitalization.sentences,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),
-                    ],
-                    validator: (value) => value == null || value.isEmpty
-                        ? 'Campo obligatorio'
-                        : null,
-                  ),
-                  const SizedBox(height: 8.0),
-                  TextFormField(
-                    controller: _fechaItvController,
-                    readOnly: true,
-                    onTap: () => _pickDate(_fechaItvController),
-                    decoration: const InputDecoration(labelText: 'Fecha ITV'),
-                    validator: (value) => value == null || value.isEmpty
-                        ? 'Campo obligatorio'
-                        : null,
-                  ),
-                  const SizedBox(height: 8.0),
-                  SizedBox(
-                    width: double.infinity,
-                    child: TextButton(
-                      onPressed: _pickImage,
-                      child: const Text('Subir Imagen'),
-                    ),
-                  ),
-                  if (_image != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text('Imagen seleccionada: ${_image!.name}'),
-                    ),
-                  const SizedBox(height: 16),
-                  _isLoading
-                      ? const CircularProgressIndicator()
-                      : ElevatedButton(
-                          onPressed: _addCar,
-                          child: const Text('Añadir'),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          Navigator.of(context).pop(null);
+        }
+      },
+      child: AlertDialog(
+        backgroundColor: Colors.white,
+        contentPadding: const EdgeInsets.all(4.0),
+        title: const Text(
+          'Añadir Coche',
+          style: TextStyle(fontSize: 16.0),
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: 300,
+            maxWidth: 300,
+            maxHeight: 450,
+          ),
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(4.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _fechaAltaController,
+                      readOnly: true,
+                      onTap: () => _pickDate(_fechaAltaController),
+                      decoration: const InputDecoration(
+                        labelText: 'Fecha Alta',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
                         ),
-                ],
+                      ),
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Campo obligatorio'
+                          : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    TextFormField(
+                      controller: _fechaMatriculacionController,
+                      readOnly: true,
+                      onTap: () => _pickDate(_fechaMatriculacionController),
+                      decoration: const InputDecoration(
+                        labelText: 'Fecha Matriculación',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Campo obligatorio'
+                          : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    TextFormField(
+                      controller: _matriculaController,
+                      decoration: const InputDecoration(
+                        labelText: 'Matrícula',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      textCapitalization: TextCapitalization.characters,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'[a-zA-Z0-9]')),
+                      ],
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Campo obligatorio'
+                          : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    TextFormField(
+                      controller: _marcaController,
+                      decoration: const InputDecoration(
+                        labelText: 'Marca',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      textCapitalization: TextCapitalization.sentences,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'[a-zA-Z0-9 ]')),
+                      ],
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Campo obligatorio'
+                          : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    TextFormField(
+                      controller: _modeloController,
+                      decoration: const InputDecoration(
+                        labelText: 'Modelo',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      textCapitalization: TextCapitalization.sentences,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'[a-zA-Z0-9 ]')),
+                      ],
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Campo obligatorio'
+                          : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    TextFormField(
+                      controller: _bastidorController,
+                      decoration: const InputDecoration(
+                        labelText: 'Bastidor',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      textCapitalization: TextCapitalization.characters,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'[a-zA-Z0-9]')),
+                      ],
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Campo obligatorio'
+                          : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    _numField(_cvController, 'CV'),
+                    const SizedBox(height: 6.0),
+                    _numField(_ccController, 'CC'),
+                    const SizedBox(height: 6.0),
+                    _numField(_kmController, 'Kilómetros'),
+                    const SizedBox(height: 6.0),
+                    _numField(_precioController, 'Precio (€)'),
+                    const SizedBox(height: 6.0),
+                    DropdownButtonFormField<String>(
+                      initialValue: _transmision,
+                      decoration: const InputDecoration(
+                        labelText: 'Transmisión',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      items: ['Automático', 'Manual', 'Híbrido']
+                          .map(
+                              (e) => DropdownMenuItem(value: e, child: Text(e)))
+                          .toList(),
+                      onChanged: (v) => setState(() => _transmision = v),
+                      validator: (value) =>
+                          value == null ? 'Campo obligatorio' : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    DropdownButtonFormField<String>(
+                      initialValue: _tipoCoche,
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo de Coche',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      items: [
+                        'Berlina',
+                        'Hatchback',
+                        '4x4',
+                        'Coupe',
+                        'Descapotable',
+                        'Monovolumen',
+                        'Furgoneta'
+                      ]
+                          .map(
+                              (e) => DropdownMenuItem(value: e, child: Text(e)))
+                          .toList(),
+                      onChanged: (v) => setState(() => _tipoCoche = v),
+                      validator: (value) =>
+                          value == null ? 'Campo obligatorio' : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    DropdownButtonFormField<String>(
+                      initialValue: _tipoCombustible,
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo Combustible',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      items: ['Diésel', 'Gasolina']
+                          .map(
+                              (e) => DropdownMenuItem(value: e, child: Text(e)))
+                          .toList(),
+                      onChanged: (v) => setState(() => _tipoCombustible = v),
+                      validator: (value) =>
+                          value == null ? 'Campo obligatorio' : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    DropdownButtonFormField<String>(
+                      initialValue: _origenMarca,
+                      decoration: const InputDecoration(
+                        labelText: 'Origen Marca',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      items: ['Europeo', 'Asiático', 'Americano']
+                          .map(
+                              (e) => DropdownMenuItem(value: e, child: Text(e)))
+                          .toList(),
+                      onChanged: (v) => setState(() => _origenMarca = v),
+                      validator: (value) =>
+                          value == null ? 'Campo obligatorio' : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    TextFormField(
+                      controller: _origenTrasladoController,
+                      decoration: const InputDecoration(
+                        labelText: 'Origen Traslado',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      textCapitalization: TextCapitalization.sentences,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),
+                      ],
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Campo obligatorio'
+                          : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    TextFormField(
+                      controller: _fechaItvController,
+                      readOnly: true,
+                      onTap: () => _pickDate(_fechaItvController),
+                      decoration: const InputDecoration(
+                        labelText: 'Fecha ITV',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Campo obligatorio'
+                          : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: _pickImage,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.black87,
+                          side: const BorderSide(
+                            color: Color(0xFF0053A0),
+                            width: 1.0,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0, vertical: 8.0),
+                        ),
+                        child: const Text(
+                          'Subir Imagen',
+                          style: TextStyle(
+                            fontSize: 14.0,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (_image != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Text(
+                          'Imagen seleccionada: ${_image!.name}',
+                          style: const TextStyle(
+                            fontSize: 14.0,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ),
+                    if (_isLoading)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 6.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            style: ButtonStyle(
+              minimumSize: WidgetStateProperty.all(const Size(100.0, 38.0)),
+              padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0)),
+            ),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(fontSize: 14.0),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: _addCar,
+            style: ButtonStyle(
+              minimumSize: WidgetStateProperty.all(const Size(100.0, 38.0)),
+              padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0)),
+            ),
+            child: const Text(
+              'Añadir',
+              style: TextStyle(fontSize: 14.0),
+            ),
+          ),
+        ],
       ),
     );
   }

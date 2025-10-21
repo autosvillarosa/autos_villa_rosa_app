@@ -377,10 +377,7 @@ class CochesScreenState extends State<CochesScreen> {
   }
 
   int _calculateCrossAxisCount(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    const desiredCardWidth = 250.0;
-    int crossAxisCount = (screenWidth / desiredCardWidth).floor();
-    return crossAxisCount.clamp(3, 6);
+    return 4;
   }
 
   Widget _buildCarCard(BuildContext context, int index) {
@@ -389,7 +386,7 @@ class CochesScreenState extends State<CochesScreen> {
     Color estadoColor;
     switch (coche['estado_coche']?.toLowerCase()) {
       case 'por llegar':
-        estadoColor = Color(0xFF0053A0);
+        estadoColor = const Color(0xFF0053A0);
         break;
       case 'disponible':
         estadoColor = Colors.green.shade600;
@@ -402,6 +399,25 @@ class CochesScreenState extends State<CochesScreen> {
         break;
       default:
         estadoColor = Colors.black;
+    }
+
+    // Determinar márgenes para web y Android
+    EdgeInsets cardMargin;
+    if (kIsWeb) {
+      const double baseMargin = 1.0;
+      const double extraEdgeMargin = 4.0;
+      if (index % 4 == 0) {
+        cardMargin = const EdgeInsets.fromLTRB(
+            baseMargin + extraEdgeMargin, 1.0, baseMargin, 1.0);
+      } else if (index % 4 == 3) {
+        cardMargin = const EdgeInsets.fromLTRB(
+            baseMargin, 1.0, baseMargin + extraEdgeMargin, 1.0);
+      } else {
+        cardMargin =
+            const EdgeInsets.fromLTRB(baseMargin, 1.0, baseMargin, 1.0);
+      }
+    } else {
+      cardMargin = EdgeInsets.fromLTRB(3.0, index == 0 ? 0.0 : 1.0, 3.0, 1.0);
     }
 
     return GestureDetector(
@@ -419,12 +435,7 @@ class CochesScreenState extends State<CochesScreen> {
         ).then((_) => _refreshWithoutScrollLoss());
       },
       child: Card(
-        margin: EdgeInsets.fromLTRB(
-          4.0,
-          index == 0 ? 0.0 : 2.0,
-          4.0,
-          2.0,
-        ),
+        margin: cardMargin,
         elevation: 4.0,
         color: Colors.white,
         shape: const RoundedRectangleBorder(
@@ -432,239 +443,265 @@ class CochesScreenState extends State<CochesScreen> {
           side: BorderSide(color: Colors.grey, width: 1.0),
         ),
         child: kIsWeb
-            ? Container(
-                padding: const EdgeInsets.all(4.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Stack(
-                          children: [
-                            Center(
-                              child: coche['imagen_url'] != null
-                                  ? CachedNetworkImage(
-                                      imageUrl: coche['imagen_url'],
-                                      fit: BoxFit.cover,
-                                      placeholder: (context, url) => const Icon(
-                                        Icons.car_rental,
-                                        size: 50,
-                                        color: Colors.grey,
-                                      ),
-                                      errorWidget: (context, url, error) =>
-                                          const Icon(
-                                        Icons.broken_image,
-                                        size: 50,
-                                        color: Colors.grey,
-                                      ),
-                                    )
-                                  : const Icon(
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    flex: 6,
+                    child: Container(
+                      color: Colors.grey.shade200,
+                      child: Center(
+                        child: FractionallySizedBox(
+                          widthFactor: 0.81,
+                          child: coche['imagen_url'] != null
+                              ? CachedNetworkImage(
+                                  imageUrl: coche['imagen_url'],
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  placeholder: (context, url) => Center(
+                                    child: Icon(
                                       Icons.car_rental,
-                                      size: 50,
+                                      size: 80,
                                       color: Colors.grey,
                                     ),
-                            ),
-                            Positioned(
-                              top: 4.0,
-                              left: 4.0,
-                              right: 4.0,
-                              child: Text(
-                                coche['matricula'] ?? 'N/A',
-                                style: const TextStyle(
-                                  fontSize: 14.0,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                                  ),
+                                  errorWidget: (context, url, error) => Center(
+                                    child: Icon(
+                                      Icons.broken_image,
+                                      size: 80,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                )
+                              : Center(
+                                  child: Icon(
+                                    Icons.car_rental,
+                                    size: 80,
+                                    color: Colors.grey,
+                                  ),
                                 ),
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 4.0,
-                              left: 4.0,
-                              right: 4.0,
-                              child: Text(
-                                coche['estado_coche'] ?? 'N/A',
-                                style: TextStyle(
-                                  fontSize: 12.0,
-                                  fontWeight: FontWeight.bold,
-                                  color: estadoColor,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Column(
+                  ),
+                  Expanded(
+                    flex: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildInfoRowBold(coche['marca'] ?? 'N/A'),
-                          _buildInfoRow(coche['modelo'] ?? 'N/A'),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Expanded(
-                                flex: 4,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  coche['matricula'] ?? 'N/A',
+                                  style: const TextStyle(
+                                    fontSize: 14.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Row(
                                   children: [
-                                    const Icon(Icons.calendar_today,
-                                        size: 14.0, color: Colors.grey),
-                                    const SizedBox(width: 4.0),
+                                    _buildInfoRowBold(coche['marca'] ?? 'N/A'),
+                                    const SizedBox(width: 8.0),
+                                    Expanded(
+                                      child: Text(
+                                        coche['modelo'] ?? 'N/A',
+                                        style: const TextStyle(fontSize: 14.0),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  children: [
                                     Expanded(
                                       child: _buildInfoRow(
                                           coche['formattedFechaMatriculacion']),
                                     ),
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                flex: 6,
-                                child: _buildInfoRowRich(
-                                  textSpans: [
-                                    TextSpan(
-                                      text: 'ITV ',
-                                      style: TextStyle(
-                                        fontSize: 14.0,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey.shade600,
+                                    Expanded(
+                                      child: _buildInfoRowRich(
+                                        textSpans: [
+                                          TextSpan(
+                                            text: '€ ',
+                                            style: TextStyle(
+                                              fontSize: 12.0,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: coche['precio']?.toString() ??
+                                                'N/A',
+                                            style: const TextStyle(
+                                              fontSize: 12.0,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    TextSpan(
-                                      text: coche['itvValue'],
-                                      style: const TextStyle(
-                                        fontSize: 14.0,
-                                        color: Colors.black,
+                                    Expanded(
+                                      child: _buildInfoRowRich(
+                                        textSpans: [
+                                          TextSpan(
+                                            text: 'ITV ',
+                                            style: TextStyle(
+                                              fontSize: 12.0,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: coche['itvValue'],
+                                            style: const TextStyle(
+                                              fontSize: 12.0,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: _buildInfoRowRich(
+                                        textSpans: [
+                                          TextSpan(
+                                            text: 'KM ',
+                                            style: TextStyle(
+                                              fontSize: 12.0,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: coche['kmValue'],
+                                            style: const TextStyle(
+                                              fontSize: 12.0,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildInfoRow(
+                                          coche['estado_coche'] ?? 'N/A'),
+                                    ),
+                                    Expanded(
+                                      child: _buildInfoRow(
+                                          coche['ubicacionDisplay']),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                          Row(
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Expanded(
-                                flex: 4,
-                                child: _buildInfoRowRich(
-                                  textSpans: [
-                                    TextSpan(
-                                      text: '€ ',
-                                      style: TextStyle(
-                                        fontSize: 14.0,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text:
-                                          coche['precio']?.toString() ?? 'N/A',
-                                      style: const TextStyle(
-                                        fontSize: 14.0,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ],
+                              // ---------- BOTÓN PDF CON CARGA ----------
+                              StreamBuilder<Map<String, dynamic>?>(
+                                stream: Stream.fromFuture(
+                                  Supabase.instance.client
+                                      .from('coches')
+                                      .select()
+                                      .eq('uuid', coche['uuid'])
+                                      .single()
+                                      .then((data) =>
+                                          data) // CORREGIDO: eliminado cast innecesario
+                                      .catchError((e) {
+                                    debugPrint(
+                                        'Error cargando coche para PDF: $e');
+                                    return <String, dynamic>{};
+                                  }),
                                 ),
+                                builder: (context, snapshot) {
+                                  final isLoading =
+                                      !snapshot.hasData && !snapshot.hasError;
+                                  final hasError = snapshot.hasError;
+
+                                  return _buildRoundButton(
+                                    context,
+                                    Icons.picture_as_pdf,
+                                    isLoading || hasError
+                                        ? null
+                                        : () {
+                                            final data = snapshot.data!;
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) =>
+                                                  PdfEditButton(
+                                                cocheUuid: coche['uuid'],
+                                                cocheData: data,
+                                              ),
+                                            ).then((_) =>
+                                                _refreshWithoutScrollLoss());
+                                          },
+                                    child: isLoading
+                                        ? const SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                      Colors.white),
+                                            ),
+                                          )
+                                        : null, // usa el icono por defecto
+                                  );
+                                },
                               ),
-                              Expanded(
-                                flex: 6,
-                                child: _buildInfoRowRich(
-                                  textSpans: [
-                                    TextSpan(
-                                      text: 'KM ',
-                                      style: TextStyle(
-                                        fontSize: 14.0,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: coche['kmValue'],
-                                      style: const TextStyle(
-                                        fontSize: 14.0,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              const SizedBox(height: 6.0),
+                              _buildRoundButton(
+                                context,
+                                Icons.location_on,
+                                () => showDialog(
+                                  context: context,
+                                  builder: (context) => UbicacionEditButton(
+                                    cocheUuid: coche['uuid'],
+                                    currentUbicacion: coche['ubicacion'],
+                                  ),
+                                ).then((result) {
+                                  if (result == true) {
+                                    _refreshWithoutScrollLoss();
+                                  }
+                                }),
                               ),
-                            ],
-                          ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.location_on,
-                                  size: 14.0, color: Colors.grey),
-                              const SizedBox(width: 4.0),
-                              Expanded(
-                                child: _buildInfoRow(coche['ubicacionDisplay']),
+                              const SizedBox(height: 6.0),
+                              _buildRoundButton(
+                                context,
+                                Icons.checklist,
+                                () => showDialog(
+                                  context: context,
+                                  builder: (context) => ChecklistEditButton(
+                                    cocheUuid: coche['uuid'],
+                                    currentDiagnostico: coche['diagnostico'],
+                                    currentFechaItv: coche['fecha_itv'],
+                                  ),
+                                ).then((result) {
+                                  if (result == true) {
+                                    _refreshWithoutScrollLoss();
+                                  }
+                                }),
                               ),
                             ],
                           ),
                         ],
                       ),
                     ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildRoundButton(
-                            context,
-                            Icons.picture_as_pdf,
-                            () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PdfEditButton(
-                                  cocheUuid: coche['uuid'],
-                                  cocheData: coche,
-                                ),
-                              ),
-                            ).then((_) => _refreshWithoutScrollLoss()),
-                          ),
-                          const SizedBox(width: 4.0),
-                          _buildRoundButton(
-                            context,
-                            Icons.location_on,
-                            () => showDialog(
-                              context: context,
-                              builder: (context) => UbicacionEditButton(
-                                cocheUuid: coche['uuid'],
-                                currentUbicacion: coche['ubicacion'],
-                              ),
-                            ).then((_) => _refreshWithoutScrollLoss()),
-                          ),
-                          const SizedBox(width: 4.0),
-                          _buildRoundButton(
-                            context,
-                            Icons.checklist,
-                            () => showDialog(
-                              context: context,
-                              builder: (context) => ChecklistEditButton(
-                                cocheUuid: coche['uuid'],
-                                currentDiagnostico: coche['diagnostico'],
-                                currentFechaItv: coche['fecha_itv'],
-                              ),
-                            ).then((_) => _refreshWithoutScrollLoss()),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               )
             : Container(
-                height: 154.0,
+                height: 156.0,
                 padding: const EdgeInsets.all(4.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -673,7 +710,7 @@ class CochesScreenState extends State<CochesScreen> {
                       margin: const EdgeInsets.only(right: 8.0),
                       child: Container(
                         width: 130.0,
-                        height: 146.0,
+                        height: 148.0,
                         decoration: BoxDecoration(
                           color: Colors.grey.shade200,
                           borderRadius: BorderRadius.circular(8.0),
@@ -744,6 +781,7 @@ class CochesScreenState extends State<CochesScreen> {
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           _buildInfoRowBold(coche['marca'] ?? 'N/A'),
                           _buildInfoRow(coche['modelo'] ?? 'N/A'),
@@ -855,18 +893,56 @@ class CochesScreenState extends State<CochesScreen> {
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _buildRoundButton(
-                          context,
-                          Icons.picture_as_pdf,
-                          () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PdfEditButton(
-                                cocheUuid: coche['uuid'],
-                                cocheData: coche,
-                              ),
-                            ),
-                          ).then((_) => _refreshWithoutScrollLoss()),
+                        // ---------- BOTÓN PDF (mismo que arriba) ----------
+                        StreamBuilder<Map<String, dynamic>?>(
+                          stream: Stream.fromFuture(
+                            Supabase.instance.client
+                                .from('coches')
+                                .select()
+                                .eq('uuid', coche['uuid'])
+                                .single()
+                                .then((data) =>
+                                    data) // CORREGIDO: eliminado cast innecesario
+                                .catchError((e) {
+                              debugPrint('Error cargando coche para PDF: $e');
+                              return <String, dynamic>{};
+                            }),
+                          ),
+                          builder: (context, snapshot) {
+                            final isLoading =
+                                !snapshot.hasData && !snapshot.hasError;
+                            final hasError = snapshot.hasError;
+
+                            return _buildRoundButton(
+                              context,
+                              Icons.picture_as_pdf,
+                              isLoading || hasError
+                                  ? null
+                                  : () {
+                                      final data = snapshot.data!;
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => PdfEditButton(
+                                          cocheUuid: coche['uuid'],
+                                          cocheData: data,
+                                        ),
+                                      ).then(
+                                          (_) => _refreshWithoutScrollLoss());
+                                    },
+                              child: isLoading
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Colors.white),
+                                      ),
+                                    )
+                                  : null,
+                            );
+                          },
                         ),
                         const SizedBox(height: 1.0),
                         _buildRoundButton(
@@ -878,7 +954,11 @@ class CochesScreenState extends State<CochesScreen> {
                               cocheUuid: coche['uuid'],
                               currentUbicacion: coche['ubicacion'],
                             ),
-                          ).then((_) => _refreshWithoutScrollLoss()),
+                          ).then((result) {
+                            if (result == true) {
+                              _refreshWithoutScrollLoss();
+                            }
+                          }),
                         ),
                         const SizedBox(height: 1.0),
                         _buildRoundButton(
@@ -891,7 +971,11 @@ class CochesScreenState extends State<CochesScreen> {
                               currentDiagnostico: coche['diagnostico'],
                               currentFechaItv: coche['fecha_itv'],
                             ),
-                          ).then((_) => _refreshWithoutScrollLoss()),
+                          ).then((result) {
+                            if (result == true) {
+                              _refreshWithoutScrollLoss();
+                            }
+                          }),
                         ),
                       ],
                     ),
@@ -920,10 +1004,14 @@ class CochesScreenState extends State<CochesScreen> {
                       icon: const Icon(Icons.add,
                           size: 19.2, color: Colors.white),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => AddCarForm()),
-                        ).then((_) => _refreshWithoutScrollLoss());
+                        showDialog(
+                          context: context,
+                          builder: (context) => const AddCarForm(),
+                        ).then((result) {
+                          if (result != null) {
+                            _refreshWithoutScrollLoss();
+                          }
+                        });
                       },
                     ),
                   ),
@@ -974,20 +1062,17 @@ class CochesScreenState extends State<CochesScreen> {
                       icon: const Icon(Icons.filter_list,
                           size: 19.2, color: Colors.white),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => FiltrosAdicionalesScreen(
-                              initialEstadoDocumentos:
-                                  _selectedEstadoDocumentos,
-                              initialEstadoPublicacion:
-                                  _selectedEstadoPublicacion,
-                              initialDiagnostico: _selectedDiagnostico,
-                              initialEstadoItv: _selectedEstadoItv,
-                              initialUbicacion: _selectedUbicacion.isNotEmpty
-                                  ? _selectedUbicacion
-                                  : null,
-                            ),
+                        showDialog(
+                          context: context,
+                          builder: (context) => FiltrosAdicionalesScreen(
+                            initialEstadoDocumentos: _selectedEstadoDocumentos,
+                            initialEstadoPublicacion:
+                                _selectedEstadoPublicacion,
+                            initialDiagnostico: _selectedDiagnostico,
+                            initialEstadoItv: _selectedEstadoItv,
+                            initialUbicacion: _selectedUbicacion.isNotEmpty
+                                ? _selectedUbicacion
+                                : null,
                           ),
                         ).then((result) {
                           if (result != null) {
@@ -1044,9 +1129,9 @@ class CochesScreenState extends State<CochesScreen> {
                                     SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount:
                                       _calculateCrossAxisCount(context),
-                                  childAspectRatio: 1.0,
-                                  crossAxisSpacing: 8.0,
-                                  mainAxisSpacing: 8.0,
+                                  childAspectRatio: 1.2158,
+                                  crossAxisSpacing: 4.0,
+                                  mainAxisSpacing: 4.0,
                                 ),
                                 itemCount: _filteredCoches.length,
                                 itemBuilder: (context, index) {
@@ -1069,12 +1154,15 @@ class CochesScreenState extends State<CochesScreen> {
     );
   }
 
+  // ------------------- HELPERS -------------------
+
   Widget _buildInfoRow(String value) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding:
+          kIsWeb ? const EdgeInsets.symmetric(vertical: 1.0) : EdgeInsets.zero,
       child: Text(
         value,
-        style: const TextStyle(fontSize: 14.0),
+        style: TextStyle(fontSize: kIsWeb ? 12.0 : 14.0),
         overflow: TextOverflow.ellipsis,
       ),
     );
@@ -1082,10 +1170,12 @@ class CochesScreenState extends State<CochesScreen> {
 
   Widget _buildInfoRowBold(String value) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding:
+          kIsWeb ? const EdgeInsets.symmetric(vertical: 1.0) : EdgeInsets.zero,
       child: Text(
         value,
-        style: const TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold),
+        style: TextStyle(
+            fontSize: kIsWeb ? 14.0 : 15.0, fontWeight: FontWeight.bold),
         overflow: TextOverflow.ellipsis,
       ),
     );
@@ -1093,7 +1183,8 @@ class CochesScreenState extends State<CochesScreen> {
 
   Widget _buildInfoRowRich({required List<TextSpan> textSpans}) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding:
+          kIsWeb ? const EdgeInsets.symmetric(vertical: 1.0) : EdgeInsets.zero,
       child: RichText(
         text: TextSpan(children: textSpans),
         overflow: TextOverflow.ellipsis,
@@ -1101,19 +1192,25 @@ class CochesScreenState extends State<CochesScreen> {
     );
   }
 
+  /// Botón redondo reutilizable (ahora acepta `child` opcional)
   Widget _buildRoundButton(
-      BuildContext context, IconData icon, VoidCallback onPressed) {
+    BuildContext context,
+    IconData icon,
+    VoidCallback? onPressed, {
+    Widget? child,
+  }) {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         shape: const CircleBorder(
           side: BorderSide(color: Color(0xFF0053A0), width: 1.0),
         ),
-        padding: const EdgeInsets.all(8.0),
-        minimumSize: const Size(38.0, 38.0),
+        padding: const EdgeInsets.all(4.0),
+        minimumSize: Size(kIsWeb ? 36.0 : 38.0, kIsWeb ? 36.0 : 38.0),
         backgroundColor: const Color(0xFF1A6BB8),
       ),
-      child: Icon(icon, size: 18.0, color: Colors.white),
+      child:
+          child ?? Icon(icon, size: kIsWeb ? 18.0 : 18.0, color: Colors.white),
     );
   }
 

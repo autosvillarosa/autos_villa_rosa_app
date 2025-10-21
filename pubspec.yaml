@@ -39,6 +39,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/assets/images/
+    - assets/assets/fonts/LiberationSans-Regular.ttf
+    - assets/assets/fonts/LiberationSans-Bold.ttf
     - assets/images/
     - assets/fonts/LiberationSans-Regular.ttf
     - assets/fonts/LiberationSans-Bold.ttf

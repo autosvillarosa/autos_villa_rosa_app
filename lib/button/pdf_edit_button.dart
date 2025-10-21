@@ -23,12 +23,12 @@ enum PdfType {
 
 class PdfEditButton extends StatefulWidget {
   final String cocheUuid;
-  final Map<String, dynamic>? cocheData;
+  final Map<String, dynamic> cocheData;
 
   const PdfEditButton({
     super.key,
     required this.cocheUuid,
-    this.cocheData,
+    required this.cocheData,
   });
 
   @override
@@ -36,44 +36,35 @@ class PdfEditButton extends StatefulWidget {
 }
 
 class _PdfEditButtonState extends State<PdfEditButton> {
-  Map<String, dynamic>? _cocheData;
-  bool _isLoading = true;
+  late Map<String, dynamic> _cocheData;
 
   @override
   void initState() {
     super.initState();
-    _fetchCocheData();
+    _cocheData = Map<String, dynamic>.from(widget.cocheData);
   }
 
-  Future<void> _fetchCocheData() async {
+  Future<void> _refreshData() async {
     try {
-      setState(() {
-        _isLoading = true;
-      });
-      final response = await Supabase.instance.client
+      final newData = await Supabase.instance.client
           .from('coches')
           .select()
           .eq('uuid', widget.cocheUuid)
           .single();
+
       if (mounted) {
         setState(() {
-          _cocheData = response;
-          _isLoading = false;
+          _cocheData = newData;
         });
       }
     } catch (e) {
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al cargar datos del coche: $e'),
+            content: Text('Error al recargar datos: $e'),
             duration: const Duration(seconds: 1),
           ),
         );
-      }
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
       }
     }
   }
@@ -101,7 +92,7 @@ class _PdfEditButtonState extends State<PdfEditButton> {
   }
 
   Future<void> _uploadDocumentacion() async {
-    if (_cocheData!['pdf_documentacion_url'] != null) {
+    if (_cocheData['pdf_documentacion_url'] != null) {
       final confirm = await _showConfirmDialog(
         "Reemplazar documentación",
         "¿Está seguro que desea reemplazar el PDF de documentación?",
@@ -146,16 +137,16 @@ class _PdfEditButtonState extends State<PdfEditButton> {
         if (pdfUrl != null) {
           await Supabase.instance.client.from('coches').update(
               {'pdf_documentacion_url': pdfUrl}).eq('uuid', widget.cocheUuid);
-          if (mounted) {
-            await _fetchCocheData();
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Documentación subida exitosamente'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            }
+          setState(() {
+            _cocheData['pdf_documentacion_url'] = pdfUrl;
+          });
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Documentación subida exitosamente'),
+                duration: Duration(seconds: 1),
+              ),
+            );
           }
         } else {
           if (mounted && context.mounted) {
@@ -206,14 +197,14 @@ class _PdfEditButtonState extends State<PdfEditButton> {
   String _getCustomSubtitle(PdfType type) {
     switch (type) {
       case PdfType.autorizacion:
-        final transporte = _cocheData?['transporte'];
+        final transporte = _cocheData['transporte'];
         return transporte != null && transporte.isNotEmpty
             ? 'Solicitado a $transporte'
             : 'Por solicitar';
       case PdfType.speech:
-        final estado = _cocheData?['estado_publicacion'];
+        final estado = _cocheData['estado_publicacion'];
         if (estado == 'Publicado') {
-          final fecha = _cocheData?['fecha_publicado'];
+          final fecha = _cocheData['fecha_publicado'];
           String formattedFecha = 'N/A';
           if (fecha != null) {
             try {
@@ -228,8 +219,8 @@ class _PdfEditButtonState extends State<PdfEditButton> {
           return 'Por publicar';
         }
       case PdfType.reserva:
-        if (_cocheData!['pdf_reserva_url'] == null) return '';
-        final fecha = _cocheData?['fecha_reserva'];
+        if (_cocheData['pdf_reserva_url'] == null) return '';
+        final fecha = _cocheData['fecha_reserva'];
         if (fecha != null) {
           try {
             final date = DateTime.parse(fecha).toLocal();
@@ -240,12 +231,12 @@ class _PdfEditButtonState extends State<PdfEditButton> {
         }
         return '';
       case PdfType.venta:
-        if (_cocheData!['pdf_venta_url'] == null) return '';
-        final fecha = _cocheData?['fecha_venta'];
+        if (_cocheData['pdf_venta_url'] == null) return '';
+        final fecha = _cocheData['fecha_venta'];
         if (fecha != null) {
           try {
             final date = DateTime.parse(fecha).toLocal();
-            return 'Vendido el   ${DateFormat('dd/MM/yyyy HH:mm').format(date)}';
+            return 'Vendido el ${DateFormat('dd/MM/yyyy HH:mm').format(date)}';
           } catch (e) {
             return 'Vendido';
           }
@@ -259,156 +250,172 @@ class _PdfEditButtonState extends State<PdfEditButton> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: const Color(0xFFE6F0FA), // Light blue background
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
+    const double dialogWidth = 300; // ← Mismo ancho que UbicacionEditButton
 
-    final estadoCoche = _cocheData!['estado_coche'];
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFE6F0FA), // Light blue background
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0053A0), // Dark blue AppBar
-        foregroundColor: Colors.white,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Bitácora y PDFs',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              '${_cocheData!['matricula'] ?? ''} - ${_cocheData!['marca'] ?? ''} ${_cocheData!['modelo'] ?? ''}',
-              style: const TextStyle(fontSize: 14),
-            ),
-          ],
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      title: const Text(
+        'Bitácora y PDFs',
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF0053A0),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          // Autorización
-          PdfTile(
-            title: 'Autorización',
-            url: _cocheData!['pdf_autorizacion_url'],
-            type: PdfType.autorizacion,
-            onGenerate: () async {
-              await AutorizacionHandler.handleGenerate(
-                context: context,
-                cocheData: _cocheData!,
-                cocheUuid: widget.cocheUuid,
-                initialTransporte: _cocheData!['transporte'] ?? '',
-                refresh: _fetchCocheData,
-              );
-            },
-            customSubtitle: Text(_getCustomSubtitle(PdfType.autorizacion)),
-            onView: _cocheData!['pdf_autorizacion_url'] != null
-                ? () => _openPdf(_cocheData!['pdf_autorizacion_url'])
-                : null,
-            isAllowed: true,
+      contentPadding: EdgeInsets.zero,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minWidth: dialogWidth,
+          maxWidth: dialogWidth,
+          maxHeight: 600, // límite superior para evitar overflow
+        ),
+        child: SingleChildScrollView(
+          // ← Permite scroll si el contenido excede (raro)
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // ← Altura dinámica
+              children: [
+                PdfTile(
+                  title: 'Autorización',
+                  url: _cocheData['pdf_autorizacion_url'],
+                  type: PdfType.autorizacion,
+                  onGenerate: () async {
+                    await AutorizacionHandler.handleGenerate(
+                      context: context,
+                      cocheData: _cocheData,
+                      cocheUuid: widget.cocheUuid,
+                      initialTransporte: _cocheData['transporte'] ?? '',
+                      refresh: _refreshData,
+                    );
+                  },
+                  customSubtitle: Text(
+                    _getCustomSubtitle(PdfType.autorizacion),
+                    style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
+                  onView: _cocheData['pdf_autorizacion_url'] != null
+                      ? () => _openPdf(_cocheData['pdf_autorizacion_url'])
+                      : null,
+                  isAllowed: true,
+                ),
+                PdfTile(
+                  title: 'Speech',
+                  url: _cocheData['pdf_speech_url'],
+                  type: PdfType.speech,
+                  onGenerate: () async {
+                    await SpeechHandler.handleGenerate(
+                      context: context,
+                      cocheData: _cocheData,
+                      cocheUuid: widget.cocheUuid,
+                      refresh: _refreshData,
+                    );
+                  },
+                  customSubtitle: Text(
+                    _getCustomSubtitle(PdfType.speech),
+                    style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
+                  onView: _cocheData['pdf_speech_url'] != null
+                      ? () => _openPdf(_cocheData['pdf_speech_url'])
+                      : null,
+                  isAllowed: true,
+                ),
+                PdfTile(
+                  title: 'Reserva',
+                  url: _cocheData['pdf_reserva_url'],
+                  type: PdfType.reserva,
+                  onGenerate: () async {
+                    await ReservaForm.handleGenerate(
+                      context: context,
+                      cocheData: _cocheData,
+                      cocheUuid: widget.cocheUuid,
+                      refresh: _refreshData,
+                    );
+                  },
+                  customSubtitle: Text(
+                    _getCustomSubtitle(PdfType.reserva),
+                    style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
+                  onView: _cocheData['pdf_reserva_url'] != null
+                      ? () => _openPdf(_cocheData['pdf_reserva_url'])
+                      : null,
+                  isAllowed: _cocheData['estado_coche'] != 'Vendido' &&
+                      _cocheData['estado_coche'] != 'Por llegar',
+                ),
+                PdfTile(
+                  title: 'Venta',
+                  url: _cocheData['pdf_venta_url'],
+                  type: PdfType.venta,
+                  onGenerate: () async {
+                    await VentaForm.handleGenerate(
+                      context: context,
+                      cocheData: _cocheData,
+                      cocheUuid: widget.cocheUuid,
+                      refresh: _refreshData,
+                    );
+                  },
+                  customSubtitle: Text(
+                    _getCustomSubtitle(PdfType.venta),
+                    style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
+                  onView: _cocheData['pdf_venta_url'] != null
+                      ? () => _openPdf(_cocheData['pdf_venta_url'])
+                      : null,
+                  isAllowed: _cocheData['estado_coche'] != 'Vendido' &&
+                      _cocheData['estado_coche'] != 'Por llegar',
+                ),
+                PdfTile(
+                  title: 'Factura',
+                  url: _cocheData['pdf_factura_url'],
+                  type: PdfType.factura,
+                  onGenerate: () async {
+                    await FacturaHandler.handleGenerate(
+                      context: context,
+                      cocheData: _cocheData,
+                      cocheUuid: widget.cocheUuid,
+                      refresh: _refreshData,
+                    );
+                  },
+                  customSubtitle: Text(
+                    _getCustomSubtitle(PdfType.factura),
+                    style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
+                  onView: _cocheData['pdf_factura_url'] != null
+                      ? () => _openPdf(_cocheData['pdf_factura_url'])
+                      : null,
+                  isAllowed: _cocheData['estado_coche'] == 'Vendido' &&
+                      (_cocheData['pdf_venta_url'] != null),
+                ),
+                PdfTile(
+                  title: 'Documentación',
+                  url: _cocheData['pdf_documentacion_url'],
+                  type: PdfType.documentacion,
+                  onGenerate: _uploadDocumentacion,
+                  customSubtitle: Text(
+                    _getCustomSubtitle(PdfType.documentacion),
+                    style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
+                  onView: _cocheData['pdf_documentacion_url'] != null
+                      ? () => _openPdf(_cocheData['pdf_documentacion_url'])
+                      : null,
+                  isAllowed: true,
+                  generateIcon: Icons.upload,
+                  generateColor: const Color.fromARGB(255, 189, 120, 0),
+                  generateTooltip: 'Subir/Reemplazar Documentación',
+                ),
+              ],
+            ),
           ),
-
-          // Speech
-          PdfTile(
-            title: 'Speech',
-            url: _cocheData!['pdf_speech_url'],
-            type: PdfType.speech,
-            onGenerate: () async {
-              await SpeechHandler.handleGenerate(
-                context: context,
-                cocheData: _cocheData!,
-                cocheUuid: widget.cocheUuid,
-                refresh: _fetchCocheData,
-              );
-            },
-            customSubtitle: Text(_getCustomSubtitle(PdfType.speech)),
-            onView: _cocheData!['pdf_speech_url'] != null
-                ? () => _openPdf(_cocheData!['pdf_speech_url'])
-                : null,
-            isAllowed: true,
-          ),
-
-          // Reserva
-          PdfTile(
-            title: 'Reserva',
-            url: _cocheData!['pdf_reserva_url'],
-            type: PdfType.reserva,
-            onGenerate: () async {
-              await ReservaForm.handleGenerate(
-                context: context,
-                cocheData: _cocheData!,
-                cocheUuid: widget.cocheUuid,
-                refresh: _fetchCocheData,
-              );
-            },
-            customSubtitle: Text(_getCustomSubtitle(PdfType.reserva)),
-            onView: _cocheData!['pdf_reserva_url'] != null
-                ? () => _openPdf(_cocheData!['pdf_reserva_url'])
-                : null,
-            isAllowed: estadoCoche != 'Vendido' && estadoCoche != 'Por llegar',
-          ),
-
-          // Venta
-          PdfTile(
-            title: 'Venta',
-            url: _cocheData!['pdf_venta_url'],
-            type: PdfType.venta,
-            onGenerate: () async {
-              await VentaForm.handleGenerate(
-                context: context,
-                cocheData: _cocheData!,
-                cocheUuid: widget.cocheUuid,
-                refresh: _fetchCocheData,
-              );
-            },
-            customSubtitle: Text(_getCustomSubtitle(PdfType.venta)),
-            onView: _cocheData!['pdf_venta_url'] != null
-                ? () => _openPdf(_cocheData!['pdf_venta_url'])
-                : null,
-            isAllowed: estadoCoche != 'Vendido' && estadoCoche != 'Por llegar',
-          ),
-
-          // Factura
-          PdfTile(
-            title: 'Factura',
-            url: _cocheData!['pdf_factura_url'],
-            type: PdfType.factura,
-            onGenerate: () async {
-              await FacturaHandler.handleGenerate(
-                context: context,
-                cocheData: _cocheData!,
-                cocheUuid: widget.cocheUuid,
-                refresh: _fetchCocheData,
-              );
-            },
-            customSubtitle: Text(_getCustomSubtitle(PdfType.factura)),
-            onView: _cocheData!['pdf_factura_url'] != null
-                ? () => _openPdf(_cocheData!['pdf_factura_url'])
-                : null,
-            isAllowed: estadoCoche == 'Vendido' &&
-                (_cocheData!['pdf_venta_url'] != null),
-          ),
-
-          // Documentación
-          PdfTile(
-            title: 'Documentación',
-            url: _cocheData!['pdf_documentacion_url'],
-            type: PdfType.documentacion,
-            onGenerate: _uploadDocumentacion,
-            customSubtitle: Text(_getCustomSubtitle(PdfType.documentacion)),
-            onView: _cocheData!['pdf_documentacion_url'] != null
-                ? () => _openPdf(_cocheData!['pdf_documentacion_url'])
-                : null,
-            isAllowed: true,
-            generateIcon: Icons.upload,
-            generateColor: const Color.fromARGB(255, 189, 120, 0),
-            generateTooltip: 'Subir/Reemplazar Documentación',
-          ),
-        ],
+        ),
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text(
+            'Cerrar',
+            style: TextStyle(fontSize: 14.0),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -449,39 +456,79 @@ class PdfTile extends StatelessWidget {
     }
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: ListTile(
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: subtitleWidget,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
+      margin: const EdgeInsets.symmetric(vertical: 4.0),
+      elevation: 1.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8.0),
+        side: const BorderSide(
+            color: Color(0xFF0053A0), width: 1.0), // ← BORDE AZUL
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (onGenerate != null)
-              IconButton(
-                icon: Icon(
-                  generateIcon,
-                  color: isAllowed ? generateColor : Colors.grey,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
-                onPressed: isAllowed ? onGenerate : null,
-                tooltip: generateTooltip ??
-                    (isAllowed
-                        ? 'Generar/Regenerar $title'
-                        : 'Acción no permitida'),
-              ),
-            if (url != null)
-              IconButton(
-                icon: const Icon(Icons.visibility, color: Colors.blue),
-                onPressed: onView,
-                tooltip: 'Ver PDF',
-              ),
-            if (url != null)
-              IconButton(
-                icon: const Icon(Icons.download, color: Colors.green),
-                onPressed: () => PdfUtils.downloadPdf(url!, title),
-                tooltip: 'Descargar PDF',
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (onGenerate != null)
+                      IconButton(
+                        icon: Icon(
+                          generateIcon,
+                          color: isAllowed ? generateColor : Colors.grey,
+                          size: 20.0,
+                        ),
+                        onPressed: isAllowed ? onGenerate : null,
+                        tooltip: generateTooltip ??
+                            (isAllowed
+                                ? 'Generar/Regenerar $title'
+                                : 'Acción no permitida'),
+                        padding: const EdgeInsets.all(4.0),
+                        constraints: const BoxConstraints(),
+                      ),
+                    if (url != null)
+                      IconButton(
+                        icon: const Icon(
+                          Icons.visibility,
+                          color: Colors.blue,
+                          size: 20.0,
+                        ),
+                        onPressed: onView,
+                        tooltip: 'Ver PDF',
+                        padding: const EdgeInsets.all(4.0),
+                        constraints: const BoxConstraints(),
+                      ),
+                    if (url != null)
+                      IconButton(
+                        icon: const Icon(
+                          Icons.download,
+                          color: Colors.green,
+                          size: 20.0,
+                        ),
+                        onPressed: () => PdfUtils.downloadPdf(url!, title),
+                        tooltip: 'Descargar PDF',
+                        padding: const EdgeInsets.all(4.0),
+                        constraints: const BoxConstraints(),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            if (subtitleWidget != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 2.0),
+                child: subtitleWidget,
               ),
           ],
         ),

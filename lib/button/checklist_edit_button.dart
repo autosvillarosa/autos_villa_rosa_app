@@ -31,6 +31,7 @@ class _ChecklistEditButtonState extends State<ChecklistEditButton> {
     'Listo para venta',
   ];
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _fechaItvController = TextEditingController();
 
   @override
   void initState() {
@@ -42,6 +43,8 @@ class _ChecklistEditButtonState extends State<ChecklistEditButton> {
     fechaItv = widget.currentFechaItv != null
         ? DateTime.tryParse(widget.currentFechaItv!)
         : null;
+    _fechaItvController.text =
+        fechaItv != null ? DateFormat('dd/MM/yyyy').format(fechaItv!) : '';
   }
 
   Future<void> _pickImage() async {
@@ -82,11 +85,7 @@ class _ChecklistEditButtonState extends State<ChecklistEditButton> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
-                controller: TextEditingController(
-                  text: fechaItv != null
-                      ? DateFormat('dd/MM/yyyy').format(fechaItv!)
-                      : '',
-                ),
+                controller: _fechaItvController,
                 readOnly: true,
                 onTap: () async {
                   final picked = await showDatePicker(
@@ -98,6 +97,8 @@ class _ChecklistEditButtonState extends State<ChecklistEditButton> {
                   if (picked != null && mounted) {
                     setState(() {
                       fechaItv = picked;
+                      _fechaItvController.text =
+                          DateFormat('dd/MM/yyyy').format(picked);
                     });
                   }
                 },
@@ -150,11 +151,7 @@ class _ChecklistEditButtonState extends State<ChecklistEditButton> {
       ),
       actions: [
         TextButton(
-          onPressed: _isLoading
-              ? null
-              : () {
-                  Navigator.of(context).pop();
-                },
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         ElevatedButton(
@@ -163,15 +160,12 @@ class _ChecklistEditButtonState extends State<ChecklistEditButton> {
               : () async {
                   if (_formKey.currentState!.validate()) {
                     if (fechaItv == null) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content:
-                                Text('Por favor, seleccione una fecha ITV'),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
-                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Por favor, seleccione una fecha ITV'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
                       return;
                     }
                     setState(() {
@@ -219,33 +213,24 @@ class _ChecklistEditButtonState extends State<ChecklistEditButton> {
                           .update(updateData)
                           .eq('uuid', widget.cocheUuid);
 
-                      if (mounted) {
-                        scaffoldMessenger.showSnackBar(
-                          const SnackBar(
-                            content:
-                                Text('Checklist actualizado correctamente'),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
-                      }
-                      if (mounted) {
-                        navigator.pop();
-                      }
+                      scaffoldMessenger.showSnackBar(
+                        const SnackBar(
+                          content: Text('Checklist actualizado correctamente'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                      navigator.pop(true); // Retorna true para refrescar
                     } catch (e) {
-                      if (mounted) {
-                        scaffoldMessenger.showSnackBar(
-                          SnackBar(
-                            content: Text('Error al guardar checklist: $e'),
-                            duration: const Duration(seconds: 1),
-                          ),
-                        );
-                      }
+                      scaffoldMessenger.showSnackBar(
+                        SnackBar(
+                          content: Text('Error al guardar checklist: $e'),
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
                     } finally {
-                      if (mounted) {
-                        setState(() {
-                          _isLoading = false;
-                        });
-                      }
+                      setState(() {
+                        _isLoading = false;
+                      });
                     }
                   }
                 },
@@ -263,6 +248,7 @@ class _ChecklistEditButtonState extends State<ChecklistEditButton> {
 
   @override
   void dispose() {
+    _fechaItvController.dispose();
     super.dispose();
   }
 }

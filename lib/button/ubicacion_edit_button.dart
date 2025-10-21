@@ -49,6 +49,11 @@ class _UbicacionEditButtonState extends State<UbicacionEditButton> {
   void initState() {
     super.initState();
     _currentUbicacion = widget.currentUbicacion;
+    // Inicializar _selectedUbicacion si _currentUbicacion coincide con una ubicación predefinida
+    if (_currentUbicacion != null &&
+        _ubicaciones.values.any((list) => list.contains(_currentUbicacion))) {
+      _selectedUbicacion = _currentUbicacion;
+    }
   }
 
   Future<void> _updateUbicacion(String newUbicacion) async {
@@ -77,7 +82,7 @@ class _UbicacionEditButtonState extends State<UbicacionEditButton> {
             duration: Duration(seconds: 1),
           ),
         );
-        navigator.pop();
+        navigator.pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -96,7 +101,7 @@ class _UbicacionEditButtonState extends State<UbicacionEditButton> {
     return AlertDialog(
       backgroundColor: Colors.white,
       title: Text(
-        'Editar Ubicación${_currentUbicacion != null ? ' ($_currentUbicacion)' : ''}',
+        'Editar Ubicación',
       ),
       contentPadding: const EdgeInsets.all(4.0),
       content: ConstrainedBox(
@@ -142,8 +147,11 @@ class _UbicacionEditButtonState extends State<UbicacionEditButton> {
                             spacing: spacing,
                             runSpacing: spacing,
                             children: entry.value.map((ubicacion) {
+                              // Resaltar si es _selectedUbicacion o si es _currentUbicacion y no se ha seleccionado otra
                               final isSelected =
-                                  _selectedUbicacion == ubicacion;
+                                  _selectedUbicacion == ubicacion ||
+                                      (_selectedUbicacion == null &&
+                                          _currentUbicacion == ubicacion);
                               return SizedBox(
                                 width: buttonWidth,
                                 height: 34.0,
