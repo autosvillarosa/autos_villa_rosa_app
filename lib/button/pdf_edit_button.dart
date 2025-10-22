@@ -37,6 +37,11 @@ class PdfEditButton extends StatefulWidget {
 
 class _PdfEditButtonState extends State<PdfEditButton> {
   late Map<String, dynamic> _cocheData;
+  final List<String> _allowedUsers = [
+    'aa03ff49-7953-4981-b6a4-42ba3f0b1566', // Alejandro
+    '229f3b4e-8470-44ab-90db-9eb1d239bf05', // Luisjavier
+    'b413c8d5-e618-41e1-a539-20a14156a18f', // Ursula
+  ];
 
   @override
   void initState() {
@@ -317,7 +322,8 @@ class _PdfEditButtonState extends State<PdfEditButton> {
                   onView: _cocheData['pdf_speech_url'] != null
                       ? () => _openPdf(_cocheData['pdf_speech_url'])
                       : null,
-                  isAllowed: true,
+                  isAllowed: _allowedUsers
+                      .contains(Supabase.instance.client.auth.currentUser?.id),
                 ),
                 PdfTile(
                   title: 'Reserva',
@@ -382,8 +388,10 @@ class _PdfEditButtonState extends State<PdfEditButton> {
                   onView: _cocheData['pdf_factura_url'] != null
                       ? () => _openPdf(_cocheData['pdf_factura_url'])
                       : null,
-                  isAllowed: _cocheData['estado_coche'] == 'Vendido' &&
-                      (_cocheData['pdf_venta_url'] != null),
+                  isAllowed: (_cocheData['estado_coche'] == 'Vendido' &&
+                          _cocheData['pdf_venta_url'] != null) &&
+                      _allowedUsers.contains(
+                          Supabase.instance.client.auth.currentUser?.id),
                 ),
                 PdfTile(
                   title: 'Documentación',

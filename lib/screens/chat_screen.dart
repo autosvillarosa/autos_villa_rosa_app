@@ -33,14 +33,19 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   String? _currentUsername;
 
   static const Map<String, String> _userIdToUsername = {
-    'e35bf66c-7396-4f00-801d-7c9a381f05e3': 'Mohamed',
-    'b332ae8a-faac-475a-803e-9bd3c8c4f174': 'Ricardo',
-    '5ad95f34-22df-4656-8648-e879697ad28c': 'Osvaldo',
-    'd80f7c0a-5531-4275-8eaf-af0cdb99bacd': 'Daniel',
-    'f3e05718-1ead-4741-b9de-796ffe64fe21': 'Lucia',
-    '80e56284-d5ed-44ef-ada9-80fa5404b3c0': 'Ursula',
-    '5df29426-11c6-4386-b0c8-58926c5f6e38': 'Alejandro',
-    'b6812b4d-6f6f-45ee-bb34-1a88cd7b323a': 'Luisjavier',
+    'e4cbfe59-428f-43ab-81db-c9f0325040ab': 'Mohammed',
+    'd790eb6b-6b29-4d3b-be80-4608cca018b6': 'Ricardo',
+    'd368721b-daa9-4c2f-8330-c45e9c4a31ba': 'Osvaldo',
+    'ac2d2900-01bc-4e84-a965-3f6433adc64f': 'Daniel',
+    '41820a1e-1a6b-4280-8599-49da4b39d5ed': 'Lucia',
+    'b413c8d5-e618-41e1-a539-20a14156a18f': 'Ursula',
+    'aa03ff49-7953-4981-b6a4-42ba3f0b1566': 'Alejandro',
+    '49fb7d64-1bfb-446f-8f69-95d1c6aa166d': 'Basilio',
+    '02bc6ad4-1940-47f5-96e0-87d867f7addf': 'Lahcen',
+    '3b3210ec-ca46-4855-97bd-555e059f0fb8': 'Achraf',
+    'a0b7e2a5-81ff-48c5-893c-2bf700478c8c': 'Edinson',
+    'ba9e0a41-8889-4d6d-a817-935ae0ab17c6': 'Usuario',
+    '229f3b4e-8470-44ab-90db-9eb1d239bf05': 'Luisjavier',
   };
 
   @override
