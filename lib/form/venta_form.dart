@@ -368,26 +368,47 @@ class _VentaFormState extends State<VentaForm> {
       return Center(child: Text(_errorLoading!));
     }
 
-    return Dialog(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 500.0),
-        padding: const EdgeInsets.all(24.0),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Formulario de Venta',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          Navigator.of(context).pop(null);
+        }
+      },
+      child: AlertDialog(
+        backgroundColor: Colors.white,
+        contentPadding: const EdgeInsets.all(4.0),
+        title: const Text(
+          'Formulario de Venta',
+          style: TextStyle(fontSize: 16.0),
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: 300,
+            maxWidth: 300,
+            maxHeight: 450,
+          ),
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(4.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8.0),
               ),
-              const SizedBox(height: 16),
-              Form(
+              child: Form(
                 key: _formKey,
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     TextFormField(
                       controller: _nombreController,
-                      decoration: const InputDecoration(labelText: 'Nombre'),
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]'))
                       ],
@@ -398,7 +419,14 @@ class _VentaFormState extends State<VentaForm> {
                     const SizedBox(height: 6.0),
                     TextFormField(
                       controller: _dniController,
-                      decoration: const InputDecoration(labelText: 'DNI'),
+                      decoration: const InputDecoration(
+                        labelText: 'DNI',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(
                             RegExp(r'[a-zA-Z0-9]'))
@@ -410,7 +438,14 @@ class _VentaFormState extends State<VentaForm> {
                     const SizedBox(height: 6.0),
                     TextFormField(
                       controller: _telefonoController,
-                      decoration: const InputDecoration(labelText: 'Teléfono'),
+                      decoration: const InputDecoration(
+                        labelText: 'Teléfono',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
                       keyboardType: TextInputType.phone,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       validator: (value) => value == null || value.isEmpty
@@ -420,7 +455,14 @@ class _VentaFormState extends State<VentaForm> {
                     const SizedBox(height: 6.0),
                     TextFormField(
                       controller: _direccionController,
-                      decoration: const InputDecoration(labelText: 'Dirección'),
+                      decoration: const InputDecoration(
+                        labelText: 'Dirección',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
                       validator: (value) => value == null || value.isEmpty
                           ? 'Ingrese la dirección'
                           : null,
@@ -428,7 +470,14 @@ class _VentaFormState extends State<VentaForm> {
                     const SizedBox(height: 6.0),
                     TextFormField(
                       controller: _correoController,
-                      decoration: const InputDecoration(labelText: 'Correo'),
+                      decoration: const InputDecoration(
+                        labelText: 'Correo',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) => value == null || value.isEmpty
                           ? 'Ingrese el correo'
@@ -437,7 +486,14 @@ class _VentaFormState extends State<VentaForm> {
                     const SizedBox(height: 6.0),
                     TextFormField(
                       controller: _ciudadController,
-                      decoration: const InputDecoration(labelText: 'Ciudad'),
+                      decoration: const InputDecoration(
+                        labelText: 'Ciudad',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]'))
                       ],
@@ -448,8 +504,14 @@ class _VentaFormState extends State<VentaForm> {
                     const SizedBox(height: 6.0),
                     TextFormField(
                       controller: _cpController,
-                      decoration:
-                          const InputDecoration(labelText: 'Código Postal'),
+                      decoration: const InputDecoration(
+                        labelText: 'Código Postal',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       validator: (value) => value == null || value.isEmpty
@@ -459,7 +521,14 @@ class _VentaFormState extends State<VentaForm> {
                     const SizedBox(height: 6.0),
                     TextFormField(
                       controller: _provinciaController,
-                      decoration: const InputDecoration(labelText: 'Provincia'),
+                      decoration: const InputDecoration(
+                        labelText: 'Provincia',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]'))
                       ],
@@ -470,8 +539,14 @@ class _VentaFormState extends State<VentaForm> {
                     const SizedBox(height: 6.0),
                     TextFormField(
                       controller: _precioFinalController,
-                      decoration:
-                          const InputDecoration(labelText: 'Precio Final (€)'),
+                      decoration: const InputDecoration(
+                        labelText: 'Precio Final (€)',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       validator: (value) {
@@ -485,9 +560,14 @@ class _VentaFormState extends State<VentaForm> {
                       },
                     ),
                     const SizedBox(height: 6.0),
-                    const Text('Garantía',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w500)),
+                    const Text(
+                      'Garantía',
+                      style: TextStyle(
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54,
+                      ),
+                    ),
                     const SizedBox(height: 6.0),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -500,7 +580,10 @@ class _VentaFormState extends State<VentaForm> {
                             });
                           },
                         ),
-                        const Text('Sí'),
+                        const Text(
+                          'Sí',
+                          style: TextStyle(fontSize: 14.0),
+                        ),
                         const SizedBox(width: 20),
                         Checkbox(
                           value: _garantia == false,
@@ -510,33 +593,48 @@ class _VentaFormState extends State<VentaForm> {
                             });
                           },
                         ),
-                        const Text('No'),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ElevatedButton(
-                          onPressed: _submitForm,
-                          child: const Text('Guardar'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            log('Formulario cancelado');
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('Cancelar'),
+                        const Text(
+                          'No',
+                          style: TextStyle(fontSize: 14.0),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 6.0),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              log('Formulario cancelado');
+              Navigator.of(context).pop(null);
+            },
+            style: ButtonStyle(
+              minimumSize: WidgetStateProperty.all(const Size(100.0, 38.0)),
+              padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0)),
+            ),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(fontSize: 14.0),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: _submitForm,
+            style: ButtonStyle(
+              minimumSize: WidgetStateProperty.all(const Size(100.0, 38.0)),
+              padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0)),
+            ),
+            child: const Text(
+              'Guardar',
+              style: TextStyle(fontSize: 14.0),
+            ),
+          ),
+        ],
       ),
     );
   }

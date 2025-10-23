@@ -399,7 +399,7 @@ class CochesScreenState extends State<CochesScreen> {
         estadoColor = Colors.green.shade600;
         break;
       case 'reservado':
-        estadoColor = Colors.orange.shade600;
+        estadoColor = Colors.amber.shade700;
         break;
       case 'vendido':
         estadoColor = Colors.red.shade600;
@@ -599,11 +599,25 @@ class CochesScreenState extends State<CochesScreen> {
                                   children: [
                                     Expanded(
                                       child: _buildInfoRow(
-                                          coche['estado_coche'] ?? 'N/A'),
+                                        coche['ubicacionDisplay'],
+                                        textAlign: TextAlign.left,
+                                      ),
                                     ),
+                                  ],
+                                ),
+                                Row(
+                                  children: [
                                     Expanded(
-                                      child: _buildInfoRow(
-                                          coche['ubicacionDisplay']),
+                                      child: Text(
+                                        coche['estado_coche'] ?? 'N/A',
+                                        style: TextStyle(
+                                          fontSize: 12.0,
+                                          fontWeight: FontWeight.bold,
+                                          color: estadoColor,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -1166,7 +1180,7 @@ class CochesScreenState extends State<CochesScreen> {
 
   // ------------------- HELPERS -------------------
 
-  Widget _buildInfoRow(String value) {
+  Widget _buildInfoRow(String value, {TextAlign textAlign = TextAlign.start}) {
     return Container(
       padding:
           kIsWeb ? const EdgeInsets.symmetric(vertical: 1.0) : EdgeInsets.zero,
@@ -1174,6 +1188,7 @@ class CochesScreenState extends State<CochesScreen> {
         value,
         style: TextStyle(fontSize: kIsWeb ? 12.0 : 14.0),
         overflow: TextOverflow.ellipsis,
+        textAlign: textAlign,
       ),
     );
   }

@@ -14,13 +14,37 @@ class DashboardScreenState extends State<DashboardScreen> {
   Map<String, List<dynamic>> _groups = {};
   List<int> _counts = [0, 0, 0, 0];
   final List<String> _intervals = [
-    '0-7 días',
-    '8-14 días',
-    '15-21 días',
-    '22+ días'
+    '0-10 días',
+    '11-20 días',
+    '21-30 días',
+    '30+ días'
   ];
   String? _selectedGroup;
   bool _isLoading = false;
+  Map<String, int> _locationCounts = {
+    'Málaga': 0,
+    'Algarrobo': 0,
+    'Otros': 0,
+  };
+
+  final List<String> _malagaLocations = [
+    'CURVA',
+    'LINEA',
+    'PALENQUE',
+    'DECATHLON',
+    'C/PASCAL',
+    'ESCUELA',
+    'IGLESIA',
+    'LA PARADA',
+    'CANTARO'
+  ];
+  final List<String> _algarroboLocations = [
+    'FINAL POLÍGONO',
+    'EXPLANADA',
+    'MEZQUITILLA',
+    'N340',
+    'CHILCHES'
+  ];
 
   @override
   void initState() {
@@ -58,17 +82,20 @@ class DashboardScreenState extends State<DashboardScreen> {
           final days = now.difference(update).inDays;
 
           String key;
-          if (days <= 7) {
+          if (days <= 10) {
             key = _intervals[0];
-          } else if (days <= 14) {
+          } else if (days <= 20) {
             key = _intervals[1];
-          } else if (days <= 21) {
+          } else if (days <= 30) {
             key = _intervals[2];
           } else {
             key = _intervals[3];
           }
           groups[key]!.add(coche);
         }
+
+        // Calcular conteos por ubicación para el intervalo seleccionado o total
+        _updateLocationCounts(groups);
 
         setState(() {
           _groups = groups;
@@ -86,6 +113,43 @@ class DashboardScreenState extends State<DashboardScreen> {
         );
       }
     }
+  }
+
+  void _updateLocationCounts(Map<String, List<dynamic>> groups) {
+    final counts = {'Málaga': 0, 'Algarrobo': 0, 'Otros': 0};
+    final targetGroup = _selectedGroup ?? 'all';
+
+    if (targetGroup == 'all') {
+      // Contar todos los coches en todos los intervalos
+      for (var interval in _intervals) {
+        for (var coche in groups[interval]!) {
+          final ubicacion = coche['ubicacion']?.toString().toUpperCase() ?? '';
+          if (_malagaLocations.contains(ubicacion)) {
+            counts['Málaga'] = counts['Málaga']! + 1;
+          } else if (_algarroboLocations.contains(ubicacion)) {
+            counts['Algarrobo'] = counts['Algarrobo']! + 1;
+          } else {
+            counts['Otros'] = counts['Otros']! + 1;
+          }
+        }
+      }
+    } else {
+      // Contar solo los coches del intervalo seleccionado
+      for (var coche in groups[targetGroup]!) {
+        final ubicacion = coche['ubicacion']?.toString().toUpperCase() ?? '';
+        if (_malagaLocations.contains(ubicacion)) {
+          counts['Málaga'] = counts['Málaga']! + 1;
+        } else if (_algarroboLocations.contains(ubicacion)) {
+          counts['Algarrobo'] = counts['Algarrobo']! + 1;
+        } else {
+          counts['Otros'] = counts['Otros']! + 1;
+        }
+      }
+    }
+
+    setState(() {
+      _locationCounts = counts;
+    });
   }
 
   Future<void> _refresh() async {
@@ -126,7 +190,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                   Expanded(
                     child: Center(
                       child: Text(
-                        'Dashboard',
+                        'Inventario',
                         style: TextStyle(
                           fontSize: 20.0,
                           fontWeight: FontWeight.bold,
@@ -152,17 +216,21 @@ class DashboardScreenState extends State<DashboardScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       : Column(
                           children: [
-                            // Título "Inventario"
-                            const Padding(
-                              padding: EdgeInsets.only(top: 16.0, bottom: 8.0),
-                              child: Text(
-                                'Inventario',
-                                style: TextStyle(
-                                  fontSize: 20.0,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0053A0),
-                                ),
-                                textAlign: TextAlign.center,
+                            // Tarjetas de conteo por ubicación
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0, vertical: 8.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  _buildLocationCard(
+                                      'Málaga', _locationCounts['Málaga'] ?? 0),
+                                  _buildLocationCard('Algarrobo',
+                                      _locationCounts['Algarrobo'] ?? 0),
+                                  _buildLocationCard(
+                                      'Otros', _locationCounts['Otros'] ?? 0),
+                                ],
                               ),
                             ),
                             // Parte superior: Gráfico de barras (40%)
@@ -201,6 +269,8 @@ class DashboardScreenState extends State<DashboardScreen> {
                                                               ? null
                                                               : _intervals[
                                                                   index];
+                                                      _updateLocationCounts(
+                                                          _groups);
                                                     });
                                                   },
                                                   child: Container(
@@ -419,6 +489,45 @@ class DashboardScreenState extends State<DashboardScreen> {
                         ),
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationCard(String title, int count) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 4.0),
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8.0),
+        side: BorderSide(color: Colors.grey.shade300),
+      ),
+      child: Container(
+        width: 100,
+        padding: const EdgeInsets.all(4.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 14.0,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0053A0),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4.0),
+            Text(
+              count.toString(),
+              style: const TextStyle(
+                fontSize: 14.0,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

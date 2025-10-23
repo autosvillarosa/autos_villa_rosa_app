@@ -306,157 +306,213 @@ class _ReservaFormState extends State<ReservaForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      child: _isLoading
-          ? const SizedBox(
-              height: 200,
-              child: Center(child: CircularProgressIndicator()),
-            )
-          : ConstrainedBox(
-              constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.8),
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: TextButton.icon(
-                          onPressed: _eliminarReserva,
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          label: const Text(
-                            'Eliminar Reserva',
-                            style: TextStyle(color: Colors.red),
-                          ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          Navigator.of(context).pop(null);
+        }
+      },
+      child: AlertDialog(
+        backgroundColor: Colors.white,
+        contentPadding: const EdgeInsets.all(4.0),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Formulario de Reserva',
+              style: TextStyle(fontSize: 16.0),
+            ),
+            TextButton(
+              onPressed: _eliminarReserva,
+              style: ButtonStyle(
+                minimumSize: WidgetStateProperty.all(const Size(80.0, 38.0)),
+                padding: WidgetStateProperty.all(EdgeInsets.zero),
+                foregroundColor: WidgetStateProperty.all(Colors.red),
+              ),
+              child: const Text(
+                'Eliminar',
+                style: TextStyle(fontSize: 14.0, color: Colors.red),
+              ),
+            ),
+          ],
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: 300,
+            maxWidth: 300,
+            maxHeight: 450,
+          ),
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(4.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _nombreController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
                         ),
                       ),
-                      const Text(
-                        'Formulario de Reserva',
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 16),
-                      Form(
-                        key: _formKey,
-                        child: Column(
-                          children: [
-                            TextFormField(
-                              controller: _nombreController,
-                              decoration:
-                                  const InputDecoration(labelText: 'Nombre'),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                    RegExp(r'[a-zA-Z\s]')),
-                                CapitalizeEachWordFormatter(),
-                              ],
-                              validator: (v) => v == null || v.isEmpty
-                                  ? 'Ingrese el nombre'
-                                  : null,
-                            ),
-                            const SizedBox(height: 6),
-                            TextFormField(
-                              controller: _dniController,
-                              decoration:
-                                  const InputDecoration(labelText: 'DNI'),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                    RegExp(r'[a-zA-Z0-9]')),
-                              ],
-                              validator: (v) => v == null || v.isEmpty
-                                  ? 'Ingrese el DNI'
-                                  : null,
-                            ),
-                            const SizedBox(height: 6),
-                            TextFormField(
-                              controller: _telefonoController,
-                              decoration:
-                                  const InputDecoration(labelText: 'Teléfono'),
-                              keyboardType: TextInputType.phone,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                    RegExp(r'[0-9\s+]')),
-                              ],
-                              validator: (v) => v == null || v.isEmpty
-                                  ? 'Ingrese el teléfono'
-                                  : null,
-                            ),
-                            const SizedBox(height: 6),
-                            TextFormField(
-                              controller: _precioFinalController,
-                              decoration: const InputDecoration(
-                                  labelText: 'Precio Final (€)'),
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly
-                              ],
-                              validator: (v) {
-                                if (v == null || v.isEmpty) {
-                                  return 'Ingrese el precio final';
-                                }
-                                if (int.tryParse(v) == null) {
-                                  return 'Ingrese un número válido';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 6),
-                            TextFormField(
-                              controller: _abonoController,
-                              decoration:
-                                  const InputDecoration(labelText: 'Abono (€)'),
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly
-                              ],
-                              validator: (v) {
-                                if (v == null || v.isEmpty) {
-                                  return 'Ingrese el abono';
-                                }
-                                if (int.tryParse(v) == null) {
-                                  return 'Ingrese un número válido';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 6),
-                            DropdownButtonFormField<String>(
-                              initialValue: _selectedMedioDePago,
-                              decoration: const InputDecoration(
-                                  labelText: 'Medio de Pago'),
-                              items: _mediosDePago
-                                  .map((m) => DropdownMenuItem(
-                                      value: m, child: Text(m)))
-                                  .toList(),
-                              onChanged: (v) =>
-                                  setState(() => _selectedMedioDePago = v),
-                              validator: (v) => v == null
-                                  ? 'Seleccione un medio de pago'
-                                  : null,
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                ElevatedButton(
-                                  onPressed: _submitForm,
-                                  child: const Text('Guardar'),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.of(context).pop(),
-                                  child: const Text('Cancelar'),
-                                ),
-                              ],
-                            ),
-                          ],
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'[a-zA-Z\s]')),
+                        CapitalizeEachWordFormatter(),
+                      ],
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Ingrese el nombre' : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    TextFormField(
+                      controller: _dniController,
+                      decoration: const InputDecoration(
+                        labelText: 'DNI',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
                         ),
                       ),
-                    ],
-                  ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'[a-zA-Z0-9]')),
+                      ],
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Ingrese el DNI' : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    TextFormField(
+                      controller: _telefonoController,
+                      decoration: const InputDecoration(
+                        labelText: 'Teléfono',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9\s+]')),
+                      ],
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Ingrese el teléfono' : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    TextFormField(
+                      controller: _precioFinalController,
+                      decoration: const InputDecoration(
+                        labelText: 'Precio Final (€)',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      validator: (v) {
+                        if (v == null || v.isEmpty) {
+                          return 'Ingrese el precio final';
+                        }
+                        if (int.tryParse(v) == null) {
+                          return 'Ingrese un número válido';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 6.0),
+                    TextFormField(
+                      controller: _abonoController,
+                      decoration: const InputDecoration(
+                        labelText: 'Abono (€)',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      validator: (v) {
+                        if (v == null || v.isEmpty) {
+                          return 'Ingrese el abono';
+                        }
+                        if (int.tryParse(v) == null) {
+                          return 'Ingrese un número válido';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 6.0),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedMedioDePago,
+                      decoration: const InputDecoration(
+                        labelText: 'Medio de Pago',
+                        labelStyle: TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      items: _mediosDePago
+                          .map(
+                              (m) => DropdownMenuItem(value: m, child: Text(m)))
+                          .toList(),
+                      onChanged: (v) =>
+                          setState(() => _selectedMedioDePago = v),
+                      validator: (v) =>
+                          v == null ? 'Seleccione un medio de pago' : null,
+                    ),
+                    const SizedBox(height: 6.0),
+                    if (_isLoading)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 6.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                  ],
                 ),
               ),
             ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            style: ButtonStyle(
+              minimumSize: WidgetStateProperty.all(const Size(100.0, 38.0)),
+              padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0)),
+            ),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(fontSize: 14.0),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: _submitForm,
+            style: ButtonStyle(
+              minimumSize: WidgetStateProperty.all(const Size(100.0, 38.0)),
+              padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0)),
+            ),
+            child: const Text(
+              'Guardar',
+              style: TextStyle(fontSize: 14.0),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
